@@ -11,9 +11,10 @@
 - [x] Move skelly with arrow keys
 - [x] Rotate skelly according to where he's facing
 - [ ] Add all animations
-  - [ ] yell
-  - [ ] attack
-  - [ ] run
+  - [x] yell
+  - [x] attack
+  - [x] run
+  - [ ] die
 - [ ] Add physic => https://rapier.rs/
   - [ ] Collision
   - [ ] Gravity
