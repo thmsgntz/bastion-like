@@ -45,14 +45,19 @@ fn is_keyboard_any_arrow_pressed (keyboard_input: &Input<KeyCode>) -> bool {
     true
 }
 
-pub fn get_keyboard_arrows_pressed(keyboard_input: &Input<KeyCode>) -> Vec<KeyCode> {
+static KEYS_ARROWS: &'static [KeyCode] = &[KeyCode::Up, KeyCode::Right, KeyCode::Left, KeyCode::Down, KeyCode::LShift];
+static KEYS_ACTIONS: &'static [KeyCode] = &[KeyCode::Space, KeyCode::Numpad1, KeyCode::Numpad2];
 
+pub fn get_pressed_keys_of_interest(keyboard_input: &Input<KeyCode>) -> Vec<KeyCode> {
     let key_filter = keyboard_input
         .get_pressed()
         .filter(|x| {
-            match **x {
-                KeyCode::Up | KeyCode::Right | KeyCode::Left | KeyCode::Down => return true,
-                _ => {}
+            // match **x {
+            //     KeyCode::Up | KeyCode::Right | KeyCode::Left | KeyCode::Down => return true,
+            //     _ => {}
+            // }
+            if KEYS_ARROWS.contains(*x) || KEYS_ACTIONS.contains(*x) {
+                return true
             }
             return false;
         });

@@ -25,6 +25,7 @@ impl Plugin for SkeletonPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(setup)
             .add_system(setup_scene_once_loaded)
+            //.add_system(inspect_animation_clip.after(setup_scene_once_loaded))
             .add_system(keyboard_animation_control);
     }
 }
@@ -46,21 +47,70 @@ impl Default for Skelly {
     }
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug, Clone, Copy)]
 enum SkellyAnimationId {
-    Idle,
-    LookingAround,
-    Attack,
-    Yell,
-    Walk,
-    Run,
+    Idle, // duration: 1.5800002
+    LookingAround,  // duration: 3.1800003
+    Attack,  // duration: 2.3200002
+    Yell,  // duration: 1.5800002
+    Walk,  // duration: 0.9800001
+    Run,  // duration: 0.78000003
+    None,
 }
+
+const SKELLY_ANIM_DURATION_YELL : f32 = 1.58;
+const SKELLY_ANIM_DURATION_ATTACK : f32 = 2.32;
+
 
 struct Animations(Vec<Handle<AnimationClip>>);
 
+
+fn inspect_animation_clip(
+    assets_handle: Res<Assets<AnimationClip>>,
+    animations: Res<Animations>,
+    mut inspect_done: Local<bool>,  // play it once
+) {
+    if !*inspect_done {
+        info!("Inspection!");
+        if let Some(anim) = assets_handle.get(&animations.0[SkellyAnimationId::Run  as usize]) {
+            info!("Inspection! 3");
+            info!("Anim {:#?}", anim);
+            *inspect_done = true;
+        }
+    }
+}
+
+// Once the scene is loaded, start the animation
+fn setup_scene_once_loaded(
+    assets_handle: Res<Assets<AnimationClip>>,
+    animations: Res<Animations>,
+    mut player: Query<&mut AnimationPlayer>,
+    mut done: Local<bool>,
+) {
+    if !*done {
+        // if let Some(anim) = assets_handle.get(&animations.0[0]) {
+        //     info!("Inspection! 3");
+        //     info!("Anim {:#?}", anim); // duration: 1.5800002
+        // }
+
+        if let Ok(mut player) = player.get_single_mut() {
+            player.play(animations.0[0].clone_weak()).repeat();
+            *done = true;
+        }
+    }
+}
+
 impl Animations {
-    pub fn play (&self, player : &mut AnimationPlayer, id_animation: SkellyAnimationId) {
-        player.play(self.0[id_animation as usize].clone_weak()).repeat();
+    pub fn play (&self, player : &mut AnimationPlayer, id_animation: SkellyAnimationId, do_repeat:bool) {
+
+        let anim = self.0[id_animation as usize].clone_weak();
+        // info!("Animation {:#?} duration {:#?}: ", id_animation, anim);
+
+        if do_repeat {
+            player.play(anim).repeat();
+        } else {
+            player.play(anim);
+        }
     }
 }
 
@@ -93,19 +143,7 @@ fn setup(
         .insert(Skelly::default());
 }
 
-// Once the scene is loaded, start the animation
-fn setup_scene_once_loaded(
-    animations: Res<Animations>,
-    mut player: Query<&mut AnimationPlayer>,
-    mut done: Local<bool>,
-) {
-    if !*done {
-        if let Ok(mut player) = player.get_single_mut() {
-            player.play(animations.0[0].clone_weak()).repeat();
-            *done = true;
-        }
-    }
-}
+
 
 
 fn keyboard_animation_control(
@@ -119,56 +157,123 @@ fn keyboard_animation_control(
         let keyboard_input = &mut keyboard_input_res.into_inner();
         let (mut skelly_transform, mut skelly) = query_skelly.get_single_mut().unwrap();
 
-        let vec_input = direction::get_keyboard_arrows_pressed(keyboard_input);
+        let pressed_keys = direction::get_pressed_keys_of_interest(keyboard_input);
         let mut vector_direction = Vec3::ZERO;
+        let mut is_action = SkellyAnimationId::None;
+        let mut is_shift = 0.0;
 
-        for x in vec_input {
-            match x {
+        if skelly.animation_id == SkellyAnimationId::Yell {
+            if player.elapsed() >= SKELLY_ANIM_DURATION_YELL {
+                animations.play(&mut player, SkellyAnimationId::Idle, true);
+                skelly.animation_id = SkellyAnimationId::Idle;
+            }
+
+            return;
+        }
+
+        if skelly.animation_id == SkellyAnimationId::Attack {
+            if player.elapsed() >= SKELLY_ANIM_DURATION_ATTACK {
+                animations.play(&mut player, SkellyAnimationId::Idle, true);
+                skelly.animation_id = SkellyAnimationId::Idle;
+            }
+
+            return;
+        }
+
+        for key in pressed_keys {
+            info!("Keys pressed:{:#?}", key);
+            match key {
                 KeyCode::Up => {
                     vector_direction += Vec3::new(1.0, 0.0, 1.0);
-                }
+                },
                 KeyCode::Right => {
                     vector_direction += Vec3::new(-1.0, 0.0, 1.0)
-
-                }
+                },
                 KeyCode::Down => {
                     vector_direction += Vec3::new(-1.0, 0.0, -1.0);
-
-                }
+                },
                 KeyCode::Left => {
                     vector_direction += Vec3::new(1.0, 0.0, -1.0);
-
-                }
+                },
+                KeyCode::LShift => {
+                    is_shift = 1.0;
+                },
+                KeyCode::Numpad1 => {
+                    is_action = SkellyAnimationId::Yell;
+                },
+                KeyCode::Numpad2 => {
+                    is_action = SkellyAnimationId::Attack;
+                },
                 _ => {}
             }
         }
 
-        if vector_direction.x > 1.0 {
-            vector_direction.x = 1.0;
-        } else if vector_direction.x < -1.0 {
-            vector_direction.x = -1.0;
+        if is_action != SkellyAnimationId::None {
+            match is_action {
+                SkellyAnimationId::Yell => {
+                    if skelly.animation_id != SkellyAnimationId::Yell
+                    {
+                        skelly.animation_id = SkellyAnimationId::Yell;
+                        animations.play(&mut player, SkellyAnimationId::Yell, false);
+
+                    }
+                },
+                SkellyAnimationId::Attack => {
+                    if skelly.animation_id != SkellyAnimationId::Attack
+                    {
+                        skelly.animation_id = SkellyAnimationId::Attack;
+                        animations.play(&mut player, SkellyAnimationId::Attack, false);
+                    }
+                }
+                _ => {}
+            }
+
+            return;
         }
 
-        if vector_direction.z > 1.0 {
-            vector_direction.z = 1.0;
-        } else if vector_direction.z < -1.0 {
-            vector_direction.z = -1.0;
-        }
 
-        if vector_direction != Vec3::ZERO {
+
+        // Moving
+        if vector_direction != Vec3::ZERO && (
+            skelly.animation_id == SkellyAnimationId::Idle
+        ||  skelly.animation_id == SkellyAnimationId::Walk
+        ||  skelly.animation_id == SkellyAnimationId::Run
+        ) {
             info!("Vector: {}", vector_direction);
 
-            skelly_transform.translation += vector_direction * ENTITY_SPEED;
+            if vector_direction.x > 1.0 {
+                vector_direction.x = 1.0;
+            } else if vector_direction.x < -1.0 {
+                vector_direction.x = -1.0;
+            }
+
+            if vector_direction.z > 1.0 {
+                vector_direction.z = 1.0;
+            } else if vector_direction.z < -1.0 {
+                vector_direction.z = -1.0;
+            }
+
+            let animation_to_play =
+                if is_shift == 1.0 {
+                    SkellyAnimationId::Run
+                } else {
+                    SkellyAnimationId::Walk
+                };
+
+            skelly_transform.translation += vector_direction * ENTITY_SPEED * (1.0 + (is_shift  * 2.0)) ;
             skelly_transform.rotation = direction::map_vec3_to_quat(vector_direction).unwrap();
 
-            if skelly.animation_id == SkellyAnimationId::Idle {
-                animations.play(&mut player, SkellyAnimationId::Walk);
-                skelly.animation_id = SkellyAnimationId::Walk;
+            if skelly.animation_id == SkellyAnimationId::Idle || skelly.animation_id != animation_to_play {
+                animations.play(&mut player, animation_to_play, true);
+                skelly.animation_id = animation_to_play;
             }
 
         } else {
-            animations.play(&mut player, SkellyAnimationId::Idle);
-            skelly.animation_id = SkellyAnimationId::Idle;
+            if skelly.animation_id == SkellyAnimationId::Walk
+                || skelly.animation_id == SkellyAnimationId::Run {
+                animations.play(&mut player, SkellyAnimationId::Idle, true);
+                skelly.animation_id = SkellyAnimationId::Idle;
+            }
         }
 
     }
