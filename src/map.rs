@@ -29,6 +29,23 @@ impl FromWorld for SquareMaterials {
     }
 }
 
+fn setup_castle(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>
+) {
+    commands
+        .spawn_bundle(PbrBundle {
+            transform: Transform {
+                translation: Vec3::new(0.0, -5.0, 0.0),
+                scale: Vec3::ONE * 0.5,
+                ..default()
+            },
+            ..Default::default()
+        })
+        .with_children(|parent| {
+            parent.spawn_scene(asset_server.load("models/Castle/Castle_FBX.gltf#Scene0"));
+        });
+}
 
 fn create_board (
     mut commands: Commands,

@@ -46,7 +46,18 @@ fn is_keyboard_any_arrow_pressed (keyboard_input: &Input<KeyCode>) -> bool {
 }
 
 static KEYS_ARROWS: &'static [KeyCode] = &[KeyCode::Up, KeyCode::Right, KeyCode::Left, KeyCode::Down, KeyCode::LShift];
-static KEYS_ACTIONS: &'static [KeyCode] = &[KeyCode::Space, KeyCode::Numpad1, KeyCode::Numpad2];
+static KEYS_ACTIONS: &'static [KeyCode] =
+    &[KeyCode::Space,
+    KeyCode::Numpad1,
+    KeyCode::Numpad2,
+    KeyCode::Numpad3,
+    KeyCode::Numpad4,
+    KeyCode::Numpad5,
+    KeyCode::Numpad6,
+    KeyCode::Numpad7,
+    KeyCode::Numpad8,
+    KeyCode::Numpad9,
+    ];
 
 pub fn get_pressed_keys_of_interest(keyboard_input: &Input<KeyCode>) -> Vec<KeyCode> {
     let key_filter = keyboard_input
