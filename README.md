@@ -10,12 +10,17 @@
     - https://bevy-cheatbook.github.io/3d/gltf.html
 - [x] Move skelly with arrow keys
 - [x] Rotate skelly according to where he's facing
-- [ ] Add all animations
+- [x] Add all animations
   - [x] yell
   - [x] attack
   - [x] run
-  - [ ] die
+  - [x] die
 - [ ] Add physic => https://rapier.rs/
+  - Links
+    - https://www.rapier.rs/docs/user_guides/bevy_plugin/getting_started_bevy
+    - https://github.com/dimforge/bevy_rapier/tree/master/bevy_rapier3d/examples
+    - https://www.reddit.com/r/bevy/comments/uoqmm0/gryazevichki_vehicle_simulation_prototype_using/
+    - https://www.reddit.com/r/bevy/comments/sz06sc/how_to_properly_handle_rapier_collision_events/
   - [ ] Collision
   - [ ] Gravity
 - [ ] Add a caster model !
