@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_rapier3d::prelude::*;
 
 pub struct MapPlugin;
 impl Plugin for MapPlugin {
@@ -50,13 +51,14 @@ fn setup_castle(
 fn create_board (
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
+    mut mat: ResMut<Assets<StandardMaterial>>,
     materials: Res<SquareMaterials>,
 )
 {
     // Add meshes and materials
     let mesh = meshes.add(Mesh::from(shape::Plane{size: 1.}));
 
-    for i in 0..8  {
+    for i in 0..8 {
         for j in 0..8 {
             let initial_mat = if (i + j + 1) % 2 == 0 {
                 materials.white_color.clone()
@@ -65,11 +67,31 @@ fn create_board (
             };
 
             commands
-                .spawn_bundle(PbrBundle{
+                .spawn_bundle(PbrBundle {
                     mesh: mesh.clone(),
                     material: initial_mat.clone(),
                     transform: Transform::from_translation(Vec3::new(i as f32, 0., j as f32)),
-                    ..Default::default()});
+                    ..Default::default()
+                }
+                );
         }
     }
+
+    let mesh_plane = meshes.add(Mesh::from(shape::Plane{size: 8.}));
+    let mat = mat.add(StandardMaterial {
+        ..default()
+    });
+
+    commands
+        .spawn()
+        .insert(RigidBody::Fixed)
+        .insert(Collider::cuboid(4.0, 0.1, 4.0))
+        .insert_bundle(PbrBundle {
+            mesh: mesh_plane.clone(),
+            material: mat.clone(),
+            transform: Transform::from_xyz(3.5, 0.0, 3.5),
+            global_transform: Default::default(),
+            visibility: Visibility { is_visible: false },
+            computed_visibility: Default::default()
+        });
 }

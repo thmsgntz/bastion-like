@@ -13,23 +13,23 @@ const ENTITY_LOOKING_DOWN_RIGHT: f32 = -(2.0 * 45.0) * PI/180.0;
 
 
 
-#[derive(PartialEq, Debug)]
-pub enum Direction {
-    Up,
-    UpRight,
-    Right,
-    DownRight,
-    Down,
-    DownLeft,
-    Left,
-    UpLeft,
-}
-
-impl Default for Direction {
-    fn default() -> Self {
-        Direction::Down
-    }
-}
+// #[derive(PartialEq, Debug)]
+// pub enum Direction {
+//     Up,
+//     UpRight,
+//     Right,
+//     DownRight,
+//     Down,
+//     DownLeft,
+//     Left,
+//     UpLeft,
+// }
+//
+// impl Default for Direction {
+//     fn default() -> Self {
+//         Direction::Down
+//     }
+// }
 
 fn is_keyboard_any_arrow_pressed (keyboard_input: &Input<KeyCode>) -> bool {
 
