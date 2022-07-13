@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy::utils::HashMap;
+use bevy_rapier3d::prelude::*;
 use crate::direction;
 use direction::ENTITY_LOOKING_UP;
 
@@ -335,9 +336,18 @@ fn setup(
     skelly_entity.hash_animations.insert(SkellyAnimationId::Hanged, skelly_hanged_animation);
 
     commands
-        .spawn_bundle(PbrBundle {
+        .spawn()
+        .insert(RigidBody::Dynamic)
+        .insert(GravityScale(1.0))
+        .insert(ColliderMassProperties::Density(1.0))
+        .insert(Restitution {
+            coefficient: 0.7,
+            combine_rule: CoefficientCombineRule::Min,
+        })
+        .insert(LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z)
+        .insert_bundle(PbrBundle {
             transform: Transform {
-                translation: Vec3::new(4.0, 0.0, 4.0),
+                translation: Vec3::new(0.0, 0.0, 0.0),
                 rotation: Quat::from_rotation_y(ENTITY_LOOKING_UP),
                 scale: Vec3::ONE * 0.6,
             },
@@ -346,10 +356,20 @@ fn setup(
         .with_children(|parent| {
             parent.spawn_scene(asset_server.load("models/skeleton/scene.gltf#Scene0"));
         })
+        .with_children(|children| {
+            children.spawn()
+                .insert(Collider::cuboid(0.2, 0.7, 0.2))
+                .insert_bundle(TransformBundle{
+                    local: Transform::from_xyz(-0.5, 1.0, 0.5),
+                    global: Default::default()
+                });
+        })
+        .insert(Velocity {
+            linvel: Vec3::new(0.0, 0.0, 0.0),
+            angvel: Vec3::new(0.0, 0.0, 0.0),
+        })
+
         .insert(skelly_entity);
-
-
-
 }
 
 
@@ -359,15 +379,16 @@ fn keyboard_animation_control(
     keyboard_input_res: Res<Input<KeyCode>>,
     animations: Res<VecAnimations>,
     mut query_animation: Query<&mut AnimationPlayer>,
-    mut query_skelly: Query<(&mut Transform, &mut Skelly)>
+    mut query_skelly: Query<(&mut Transform, &mut Velocity, &mut Skelly)>
 
 ) {
     if let Ok(mut player) = query_animation.get_single_mut() {
         let keyboard_input = &mut keyboard_input_res.into_inner();
-        let (mut skelly_transform, mut skelly) = query_skelly.get_single_mut().unwrap();
+        let (mut skelly_transform, mut skelly_velocity, mut skelly) = query_skelly.get_single_mut().unwrap();
 
         let pressed_keys = direction::get_pressed_keys_of_interest(keyboard_input);
         let mut vector_direction = Vec3::ZERO;
+        let mut vector_angular = Vec3::ZERO;
         let mut is_action = SkellyAnimationId::None;
         let mut is_shift = 0.0;
 
@@ -382,13 +403,15 @@ fn keyboard_animation_control(
                     vector_direction += Vec3::new(1.0, 0.0, 1.0);
                 },
                 KeyCode::Right => {
-                    vector_direction += Vec3::new(-1.0, 0.0, 1.0)
+                    vector_direction += Vec3::new(-1.0, 0.0, 1.0);
+                    vector_angular = Vec3::new(0.0, -1.0, 0.0);
                 },
                 KeyCode::Down => {
                     vector_direction += Vec3::new(-1.0, 0.0, -1.0);
                 },
                 KeyCode::Left => {
                     vector_direction += Vec3::new(1.0, 0.0, -1.0);
+                    vector_angular = Vec3::new(0.0, 1.0, 0.0);
                 },
                 KeyCode::LShift => {
                     is_shift = 1.0;
@@ -412,7 +435,8 @@ fn keyboard_animation_control(
                     is_action = SkellyAnimationId::Spawn;
                 },
                 KeyCode::Numpad7 => {
-                    is_action = SkellyAnimationId::Hanged;
+                    // is_action = SkellyAnimationId::Hanged;
+                    info!("skelly_velocity:{:#?}", skelly_velocity);
                 },
                 _ => {}
             }
@@ -462,8 +486,10 @@ fn keyboard_animation_control(
                     SkellyAnimationId::Walk
                 };
 
-            skelly_transform.translation += vector_direction * ENTITY_SPEED * (1.0 + (is_shift  * 2.0)) ;
-            skelly_transform.rotation = direction::map_vec3_to_quat(vector_direction).unwrap();
+            skelly_velocity.linvel = vector_direction * 2.0 * (1.0 + (is_shift  * 2.0)) ;
+            info!("skelly_velocity:{:#?}", skelly_velocity);
+            skelly_velocity.angvel = vector_angular * 2.1;
+            //skelly_transform.rotation = Vec3::direction::map_vec3_to_quat(vector_direction).unwrap();
 
             if skelly.current_animation_id == SkellyAnimationId::Idle || skelly.current_animation_id != animation_to_play {
                 animations.play(&mut player, animation_to_play, true);

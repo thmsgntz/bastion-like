@@ -5,8 +5,8 @@ use crate::shape::Icosphere;
 pub struct PhysicsPlugin;
 impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(setup_physics)
-            .add_system(print_ball_altitude);
+        app.add_startup_system(setup_physics);
+            //.add_system(print_ball_altitude);
     }
 }
 
@@ -25,10 +25,11 @@ fn setup_physics(
         .spawn()
         .insert(RigidBody::Dynamic)
         .insert(Collider::ball(0.5))
-        .insert(Restitution::coefficient(0.7))
+        .insert(GravityScale(1.0))
+        .insert(ColliderMassProperties::Density(1.0))
         .insert(Velocity {
             linvel: Vec3::new(0.0, 0.0, 0.0),
-            angvel: Vec3::new(0.0, 0.0, 0.),
+            angvel: Vec3::new(0.0, 0.0, 0.0),
         })
         .insert_bundle(
             PbrBundle {
