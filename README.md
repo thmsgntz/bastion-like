@@ -1,6 +1,6 @@
 # bastion-like
 
-![gif](readme/readme.gif)
+![gif](readme/physic_1.gif)
 
 ## Success list:
 
