@@ -35,12 +35,11 @@ pub struct Piece {
     pub y: u8,
 }
 
-fn create_pieces (
-    mut commands:Commands,
+fn create_pieces(
+    mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-)
-{
+) {
     // Load all the meshes
     let king_handle: Handle<Mesh> =
         asset_server.load(format!("{}#Mesh0/Primitive0", piece_settings::GLB_PIECES_PATH).as_str());
@@ -132,7 +131,6 @@ fn create_pieces (
         );
     }
 
-
     spawn_rook(
         &mut commands,
         black_material.clone(),
@@ -211,8 +209,7 @@ pub fn spawn_king(
     mesh: Handle<Mesh>,
     mesh_cross: Handle<Mesh>,
     position: (u8, u8),
-)
-{
+) {
     commands
         // Spawn parent entity
         .spawn_bundle(PbrBundle {
@@ -261,8 +258,7 @@ pub fn spawn_knight(
     mesh_1: Handle<Mesh>,
     mesh_2: Handle<Mesh>,
     position: (u8, u8),
-)
-{
+) {
     commands
         // Spawn parent entity
         .spawn_bundle(PbrBundle {
@@ -310,8 +306,7 @@ pub fn spawn_queen(
     piece_color: PieceColor,
     mesh: Handle<Mesh>,
     position: (u8, u8),
-)
-{
+) {
     commands
         .spawn_bundle(PbrBundle {
             transform: Transform::from_translation(Vec3::new(
@@ -347,8 +342,7 @@ pub fn spawn_bishop(
     piece_color: PieceColor,
     mesh: Handle<Mesh>,
     position: (u8, u8),
-)
-{
+) {
     commands
         .spawn_bundle(PbrBundle {
             transform: Transform::from_translation(Vec3::new(
@@ -384,8 +378,7 @@ pub fn spawn_rook(
     piece_color: PieceColor,
     mesh: Handle<Mesh>,
     position: (u8, u8),
-)
-{
+) {
     commands
         .spawn_bundle(PbrBundle {
             transform: Transform::from_translation(Vec3::new(
@@ -421,8 +414,7 @@ pub fn spawn_pawn(
     piece_color: PieceColor,
     mesh: Handle<Mesh>,
     position: (u8, u8),
-)
-{
+) {
     commands
         .spawn_bundle(PbrBundle {
             transform: Transform::from_translation(Vec3::new(

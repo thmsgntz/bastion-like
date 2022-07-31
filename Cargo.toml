@@ -9,6 +9,7 @@ edition = "2021"
 bevy = "0.7.0"
 bevy_mod_picking = "0.7.0"
 bevy_rapier3d = { version = "0.14.1", features = [ "simd-stable", "debug-render" ] }
+nalgebra = "0.31.0"
 
 # Enable only a small amount of optimization in debug mode
 # See: https://bevy-cheatbook.github.io/pitfalls/performance.html
