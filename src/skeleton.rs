@@ -1,10 +1,8 @@
 use crate::direction;
-use bevy::math::const_vec3;
 use bevy::prelude::*;
 use bevy::utils::HashMap;
 use bevy_rapier3d::prelude::*;
 use direction::Direction;
-use direction::ENTITY_LOOKING_UP;
 
 // https://github.com/bevyengine/bevy/blob/main/examples/animation/animated_fox.rs
 
@@ -19,30 +17,30 @@ When you start an animation you just tell the AnimationPlayer which AnimationCli
 
 2. If you add a second Fox it will be given its own AnimationPlayer component, which can run another animation.
 
-So if you want seperate animations for each Animated Fox you can iterate through the AnimationPlayer
+So if you want seperate hashmap_animations for each Animated Fox you can iterate through the AnimationPlayer
  components with a query and tell them to use different AnimationClip assets.
 
  */
+
+pub const ENTITY_SPEED: f32 = 2.0;
+pub const ENTITY_SPEED_ROTATION: f32 = 0.1;
 
 pub struct SkeletonPlugin;
 impl Plugin for SkeletonPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(setup)
-            .add_system(setup_scene_once_loaded)
+            //.add_system(setup_scene_once_loaded)
             //.add_system(inspect_animation_clip.after(setup_scene_once_loaded))
             .add_system(keyboard_animation_control);
     }
 }
-
-pub const ENTITY_SPEED: f32 = 0.04;
 
 #[derive(Component)]
 struct Skelly {
     current_animation_id: SkellyAnimationId,
     hash_animations: HashMap<SkellyAnimationId, Animation>,
     direction: Direction,
-    direction_vec3: Vec3,
-    //player: Option<&mut AnimationPlayer>,
+    direction_vec3: Vec3, // TODO: à bouger, c'est très moche ici
 }
 
 impl Default for Skelly {
@@ -52,34 +50,34 @@ impl Default for Skelly {
             hash_animations: HashMap::new(),
             direction: Direction::Up,
             direction_vec3: Direction::Up.get_vec3(),
-            //player: None
         }
     }
 }
 
 impl Skelly {
+
+    /// Returns true if entity is either IDLE or animation ACTION is done
     fn is_ready(&self, player: &mut AnimationPlayer) -> bool {
         let current_animation = self.current_animation_id;
 
+        // idle
         if current_animation == SkellyAnimationId::Idle {
             return true;
         }
 
+        // is action done ?
         if let Some(animation) = self.hash_animations.get(&current_animation) {
-            return if !animation.is_repeatable {
-                if player.elapsed() >= animation.duration {
-                    true
-                } else {
-                    false
-                }
-            } else {
+            return if animation.is_repeatable || player.elapsed() >= animation.duration {
                 true
+            } else {
+                false
             };
         }
 
         false
     }
 
+    /// True if IDLE or WALK or RUN
     fn can_move(&self) -> bool {
         match self.current_animation_id {
             SkellyAnimationId::Idle | SkellyAnimationId::Walk | SkellyAnimationId::Run => true,
@@ -101,6 +99,7 @@ impl Skelly {
         }
     }
 
+    /// Play animation WALK or RUN
     fn play_animation_move(&mut self, player: &mut AnimationPlayer, action_id: SkellyAnimationId) {
         if self.current_animation_id == SkellyAnimationId::Idle
             || self.current_animation_id != action_id
@@ -112,6 +111,7 @@ impl Skelly {
         }
     }
 
+    /// Play IDLE animation
     fn play_animation_idle(&mut self, player: &mut AnimationPlayer) {
         if self.current_animation_id != SkellyAnimationId::Idle {
             if let Some(animation) = self.hash_animations.get(&SkellyAnimationId::Idle) {
@@ -202,23 +202,23 @@ fn inspect_animation_clip(
 }
 
 // Once the scene is loaded, start the animation
-fn setup_scene_once_loaded(
-    //animations: Res<VecAnimations>,
-    mut player: Query<&mut AnimationPlayer>,
-    mut done: Local<bool>,
-) {
-    if !*done {
-        // if let Some(anim) = assets_handle.get(&animations.0[0]) {
-        //     info!("Inspection! 3");
-        //     info!("Anim {:#?}", anim); // duration: 1.5800002
-        // }
-
-        if let Ok(mut player) = player.get_single_mut() {
-            //player.play(animations.0[0].clone_weak()).repeat();
-            *done = true;
-        }
-    }
-}
+// fn setup_scene_once_loaded(
+//     //hashmap_animations: Res<VecAnimations>,
+//     mut player: Query<&mut AnimationPlayer>,
+//     mut done: Local<bool>,
+// ) {
+//     if !*done {
+//         // if let Some(anim) = assets_handle.get(&hashmap_animations.0[0]) {
+//         //     info!("Inspection! 3");
+//         //     info!("Anim {:#?}", anim); // duration: 1.5800002
+//         // }
+//
+//         if let Ok(mut player) = player.get_single_mut() {
+//             player.play(hashmap_animations.0[0].clone_weak()).repeat();
+//             *done = true;
+//         }
+//     }
+// }
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     let skelly_idle_animation = Animation {
@@ -368,7 +368,7 @@ fn spawn_skelly(mut commands: Commands, asset_server: Res<AssetServer>, skelly_e
         .insert_bundle(PbrBundle {
             transform: Transform {
                 translation: Vec3::new(0.0, 0.0, 0.0),
-                rotation: Quat::from_rotation_y(ENTITY_LOOKING_UP),
+                rotation: Quat::from_rotation_y(Direction::Up.get_angle()),
                 scale: Vec3::ONE * 0.6,
             },
             ..Default::default()
@@ -471,28 +471,8 @@ mod tests {
     }
 }
 
-fn rotation_to_vec3(current_vec: Vec3, current_direction: Direction, direction: Direction) -> Vec3 {
-    let diff_angle = current_direction.difference_angle(&direction);
-    match current_direction {
-        Direction::Up => match direction {
-            Direction::Right | Direction::UpRight => {}
-            _ => {}
-        },
-        Direction::UpRight => {}
-        Direction::Right => {}
-        Direction::DownRight => {}
-        Direction::Down => {}
-        Direction::DownLeft => {}
-        Direction::Left => {}
-        Direction::UpLeft => {}
-    }
-
-    return current_vec;
-}
-
 fn keyboard_animation_control(
     keyboard_input_res: Res<Input<KeyCode>>,
-    //animations: Res<VecAnimations>,
     mut query_animation: Query<&mut AnimationPlayer>,
     mut query_skelly: Query<(&mut Transform, &mut Velocity, &mut Skelly)>,
 ) {
@@ -503,7 +483,6 @@ fn keyboard_animation_control(
 
         let pressed_keys = direction::get_pressed_keys_of_interest(keyboard_input);
         let mut vector_direction = Vec3::ZERO;
-        let mut vector_angular = Vec3::ZERO;
         let mut is_action = SkellyAnimationId::None;
         let mut is_shift = 0.0;
 
@@ -519,14 +498,12 @@ fn keyboard_animation_control(
                 }
                 KeyCode::Right => {
                     vector_direction += Vec3::new(-1.0, 0.0, 1.0);
-                    vector_angular = Vec3::new(0.0, -1.0, 0.0);
                 }
                 KeyCode::Down => {
                     vector_direction += Vec3::new(-1.0, 0.0, -1.0);
                 }
                 KeyCode::Left => {
                     vector_direction += Vec3::new(1.0, 0.0, -1.0);
-                    vector_angular = Vec3::new(0.0, 1.0, 0.0);
                 }
                 KeyCode::LShift => {
                     is_shift = 1.0;
@@ -550,8 +527,7 @@ fn keyboard_animation_control(
                     is_action = SkellyAnimationId::Spawn;
                 }
                 KeyCode::Numpad7 => {
-                    // is_action = SkellyAnimationId::Hanged;
-                    info!("skelly_velocity:{:#?}", skelly_velocity);
+                    is_action = SkellyAnimationId::Hanged;
                 }
                 _ => {}
             }
@@ -561,21 +537,6 @@ fn keyboard_animation_control(
         if is_action != SkellyAnimationId::None {
             skelly.play_animation_action(&mut player, is_action);
             return;
-            // match is_action {
-            //     SkellyAnimationId::Yell => {
-            //         skelly.play_animation_action(&mut player, SkellyAnimationId::Yell);
-            //     },
-            //     SkellyAnimationId::Attack => {
-            //         skelly.play_animation_action(&mut player, SkellyAnimationId::Attack);
-            //     }
-            //     SkellyAnimationId::Fall => {
-            //         skelly.play_animation_action(&mut player, SkellyAnimationId::Fall);
-            //     },
-            //     // SkellyAnimationId::Attack => {
-            //     //     skelly.play_animation_action(&mut player, SkellyAnimationId::Attack);
-            //     // },
-            //     _ => {}
-            // }
         }
 
         // If Moving, than move and return
@@ -597,14 +558,17 @@ fn keyboard_animation_control(
             let direction = direction::map_vec3_to_direction(vector_direction).unwrap();
             let qu = Quat::from_rotation_y(direction.get_angle());
 
-            let rotation = if skelly_transform.rotation.angle_between(qu).abs() > 3.0 {
+            let rotation = if skelly_transform.rotation.angle_between(qu).abs() > 2.5 {
                 qu
             } else {
-                skelly_transform.rotation.lerp(qu, 0.1)
+                skelly_transform.rotation.lerp(qu, ENTITY_SPEED_ROTATION)
             };
 
-            let mut translation = skelly.direction_vec3.lerp(vector_direction, 0.1);
+            let mut translation = skelly
+                .direction_vec3
+                .lerp(vector_direction, ENTITY_SPEED_ROTATION);
             skelly.direction_vec3 = translation;
+            translation = translation * ENTITY_SPEED * (1.0 + (is_shift * 2.0));
             translation.y = skelly_velocity.linvel.y;
 
             vector_direction = vector_direction.normalize();
@@ -615,23 +579,13 @@ fn keyboard_animation_control(
                 SkellyAnimationId::Walk
             };
 
-            skelly_velocity.linvel = translation * 2.0 * (1.0 + (is_shift * 2.0));
-            //skelly_impulse.impulse  = vector_direction * 0.05 * (1.0 + (is_shift  * 2.0));
-            //info!("skelly_velocity:{:#?}", skelly_velocity);
-            //info!("Rotation:{:#?}", qu.dot(skelly_transform.rotation));
-            //skelly_velocity.angvel = -skelly_velocity.angvel;
-            //skelly_velocity.angvel = Vec3::ZERO;
-            //info!("Before {:#?}", skelly_transform.translation);
+            skelly_velocity.linvel = translation;
             skelly_transform.rotation = rotation;
-            //info!("Rotation: {:#?}", skelly_transform.rotation);
-            //info!("After {:#?}", skelly_transform.translation);
+
             if skelly.current_animation_id == SkellyAnimationId::Idle
                 || skelly.current_animation_id != animation_to_play
             {
-                //TODO lignes commentées arrête lanimation de walking?
-                //animations.play(&mut player, animation_to_play, true);
                 skelly.play_animation_move(&mut player, animation_to_play);
-                //skelly.current_animation_id = animation_to_play;
             }
 
             return;
@@ -639,10 +593,7 @@ fn keyboard_animation_control(
             if skelly.current_animation_id == SkellyAnimationId::Walk
                 || skelly.current_animation_id == SkellyAnimationId::Run
             {
-                //TODO lignes commentées arrête lanimation de walking?
                 skelly.play_animation_idle(&mut player);
-                //animations.play(&mut player, SkellyAnimationId::Idle, true);
-                //skelly.current_animation_id = SkellyAnimationId::Idle;
                 skelly_velocity.linvel = Vec3::ZERO;
             }
         }

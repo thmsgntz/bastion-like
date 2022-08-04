@@ -1,10 +1,13 @@
-#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+//#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod chess_pieces;
 mod direction;
 mod map;
 mod physics;
 mod skeleton;
+mod creatures;
+mod skelly;
+mod mob;
 
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::render::camera::Camera3d;
@@ -111,14 +114,16 @@ fn main() {
             ..Default::default()
         })
         .add_plugins(DefaultPlugins)
-        .add_plugin(LogDiagnosticsPlugin::default())
-        .add_plugin(FrameTimeDiagnosticsPlugin::default())
+        //.add_plugin(LogDiagnosticsPlugin::default())
+        //.add_plugin(FrameTimeDiagnosticsPlugin::default())
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
-        //.add_plugin(RapierDebugRenderPlugin::default())
+        .add_plugin(RapierDebugRenderPlugin::default())
         //.add_startup_system(draw_repere)
         .add_plugin(map::MapPlugin)
         //.add_plugin(chess_pieces::PiecesPlugin)
-        .add_plugin(skeleton::SkeletonPlugin)
+        //.add_plugin(skeleton::SkeletonPlugin)
+        .add_plugin(skelly::SkellyPlugin)
+        .add_plugin(mob::MobPlugin)
         .add_plugin(physics::PhysicsPlugin)
         .add_startup_system(setup_camera_and_light)
         .run();

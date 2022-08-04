@@ -2,7 +2,7 @@ use crate::{Input, KeyCode, Quat, Vec3};
 use nalgebra;
 use std::f32::consts::PI;
 
-pub const ENTITY_LOOKING_UP: f32 = 45.0 * PI / 180.0;
+const ENTITY_LOOKING_UP: f32 = 45.0 * PI / 180.0;
 const ENTITY_LOOKING_UP_RIGHT: f32 = PI / 180.0;
 const ENTITY_LOOKING_RIGHT: f32 = -45.0 * PI / 180.0;
 const ENTITY_LOOKING_UP_LEFT: f32 = (2.0 * 45.0) * PI / 180.0;
@@ -74,16 +74,16 @@ impl Default for Direction {
     }
 }
 
-fn is_keyboard_any_arrow_pressed(keyboard_input: &Input<KeyCode>) -> bool {
-    for key in keyboard_input.get_pressed() {
-        match *key {
-            KeyCode::Up | KeyCode::Right | KeyCode::Left | KeyCode::Down => return false,
-
-            _ => {}
-        }
-    }
-    true
-}
+// fn is_keyboard_any_arrow_pressed(keyboard_input: &Input<KeyCode>) -> bool {
+//     for key in keyboard_input.get_pressed() {
+//         match *key {
+//             KeyCode::Up | KeyCode::Right | KeyCode::Left | KeyCode::Down => return false,
+//
+//             _ => {}
+//         }
+//     }
+//     true
+// }
 
 static KEYS_ARROWS: &'static [KeyCode] = &[
     KeyCode::Up,
