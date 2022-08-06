@@ -3,6 +3,7 @@ mod chess_pieces;
 mod skeleton;
 mod direction;
 mod physics;
+mod fox;
 
 use bevy::{prelude::*, render::camera::ScalingMode};
 use bevy::render::camera::Camera3d;
@@ -100,13 +101,14 @@ fn main() {
             ..Default::default()
         })
         .add_plugins(DefaultPlugins)
-        .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
-        .add_plugin(RapierDebugRenderPlugin::default())
+        //.add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
+        //.add_plugin(RapierDebugRenderPlugin::default())
         .add_plugin(map::MapPlugin)
-        .add_plugin(chess_pieces::PiecesPlugin)
-        .add_plugin(skeleton::SkeletonPlugin)
-        .add_plugin(physics::PhysicsPlugin)
+        //.add_plugin(chess_pieces::PiecesPlugin)
+        //.add_plugin(skeleton::SkeletonPlugin)
+        //.add_plugin(physics::PhysicsPlugin)
         .add_startup_system(setup_camera_and_light)
+        .add_plugin(fox::FoxPlugin)
         .add_system(draw_repere)
         .run();
 }
