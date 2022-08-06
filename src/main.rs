@@ -1,3 +1,5 @@
+extern crate core;
+
 mod map;
 mod chess_pieces;
 mod skeleton;
