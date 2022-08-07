@@ -1,9 +1,11 @@
+extern crate core;
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod chess_pieces;
 mod direction;
 mod map;
 mod physics;
+mod fox;
 mod skeleton;
 
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
@@ -120,6 +122,7 @@ fn main() {
         //.add_plugin(chess_pieces::PiecesPlugin)
         .add_plugin(skeleton::SkeletonPlugin)
         .add_plugin(physics::PhysicsPlugin)
+        .add_plugin(fox::FoxPlugin)
         .add_startup_system(setup_camera_and_light)
         .run();
 }
