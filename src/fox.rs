@@ -1,13 +1,16 @@
 use bevy::prelude::*;
 use rand::Rng;
 use std::time::Duration;
+use bevy::ecs::system::Command;
+use bevy::scene::InstanceId;
 
 pub struct FoxPlugin;
 impl Plugin for FoxPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(setup)
             .add_system(link_animations)
-            .add_system(keyboard_control);
+            //.add_system(keyboard_control)
+        ;
     }
 }
 
@@ -18,6 +21,15 @@ pub struct Animations {
 
 pub struct VecAnimations(Vec<Animations>);
 
+struct SceneHandle {
+    handle: Handle<Scene>,
+    vec_animations: Vec<Handle<AnimationClip>>,
+    is_loaded: bool,
+    creature_entity_id: Option<u32>, // creature id associated with this scene
+    // has_camera: bool,
+    // has_light: bool,
+}
+
 #[derive(Component)]
 struct AnimationDuration {
     time: Timer,
@@ -26,29 +38,76 @@ struct AnimationDuration {
 #[derive(Component)]
 pub struct Creature;
 
+fn setup_fox(asset_server: &Res<AssetServer>, scene_path: &str) -> SceneHandle {
+
+    let scene_handle = SceneHandle {
+        handle: asset_server.load(scene_path),
+        vec_animations: vec![
+            asset_server.load("models/Fox.glb#Animation2"),
+            asset_server.load("models/Fox.glb#Animation1"),
+            asset_server.load("models/Fox.glb#Animation0"),
+        ],
+        is_loaded: false,
+        creature_entity_id: None
+    };
+
+    scene_handle
+}
+
+fn setup_skelly(asset_server: &Res<AssetServer>, scene_path: &str) -> SceneHandle {
+    let asset_scene_handle = asset_server.load(scene_path);
+
+    let scene_handle = SceneHandle {
+        handle: asset_scene_handle,
+        vec_animations: vec![
+            asset_server.load("models/skeleton/scene.gltf#Animation1"),
+            asset_server.load("models/skeleton/scene.gltf#Animation2"),
+            asset_server.load("models/skeleton/scene.gltf#Animation3"),
+        ],
+        is_loaded: false,
+        creature_entity_id: None
+    };
+
+    scene_handle
+}
+
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Fox
-    let id_fox = commands
-        .spawn()
-        .insert_bundle(PbrBundle {
-            transform: Transform {
-                translation: Vec3::new(4.0, 0.0, 4.0),
-                scale: Vec3::ONE * 0.01,
+
+    let mut fox_scene_handle = setup_fox(
+        &asset_server,
+        "models/Fox.glb#Scene0",
+    );
+
+   let fox_id =
+        commands
+            .spawn()
+            .insert_bundle(PbrBundle {
+                transform: Transform {
+                    translation: Vec3::new(4.0, 0.0, 4.0),
+                    scale: Vec3::ONE * 0.01,
+                    ..default()
+                },
                 ..default()
-            },
-            ..default()
-        })
-        .with_children(|parent| {
-            parent.spawn_scene(asset_server.load("models/Fox.glb#Scene0"));
-        })
-        .insert(Creature)
-        .insert(AnimationDuration {
-            time: Timer::new(Duration::from_secs(2), true),
-        })
-        .id();
+            })
+            .with_children(|parent| {
+                parent.spawn_scene(?);
+            })
+            .insert(Creature)
+            .insert(AnimationDuration {
+                time: Timer::new(Duration::from_secs(2), true),
+            })
+            .id();
+
+    fox_scene_handle.creature_entity_id = Some(fox_id.id());
+
+    /*let mut skelly_scene_handle = setup_fox(
+        &asset_server,
+        "models/skeleton/scene.gltf#Scene0",
+    );
 
     // Skeleton
-    let id_sk = commands
+    let skelly_id = commands
         .spawn()
         .insert_bundle(PbrBundle {
             transform: Transform {
@@ -59,7 +118,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         })
         .with_children(|parent| {
-            parent.spawn_scene(asset_server.load("models/skeleton/scene.gltf#Scene0"));
+            parent.spawn_scene(skelly_scene_handle.handle);
         })
         .insert(Creature)
         .insert(AnimationDuration {
@@ -67,28 +126,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         })
         .id();
 
-    info!("Fox id: {}", id_fox.id());
-    info!("Ske id: {}", id_sk.id());
-
-    // Insert a resource with the current scene information
-    commands.insert_resource(VecAnimations(vec![
-        Animations {
-            vec_anim: vec![
-                asset_server.load("models/Fox.glb#Animation2"),
-                asset_server.load("models/Fox.glb#Animation1"),
-                asset_server.load("models/Fox.glb#Animation0"),
-            ],
-            entity: id_fox.id(),
-        },
-        Animations {
-            vec_anim: vec![
-                asset_server.load("models/skeleton/scene.gltf#Animation1"),
-                asset_server.load("models/skeleton/scene.gltf#Animation2"),
-                asset_server.load("models/skeleton/scene.gltf#Animation3"),
-            ],
-            entity: id_sk.id(),
-        },
-    ]));
+    skelly_scene_handle.creature_entity_id = Some(skelly_id.id());*/
 }
 
 #[derive(Component)]
