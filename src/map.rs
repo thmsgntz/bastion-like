@@ -4,8 +4,7 @@ use bevy_rapier3d::prelude::*;
 pub struct MapPlugin;
 impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .init_resource::<SquareMaterials>()
+        app.init_resource::<SquareMaterials>()
             .add_startup_system(create_board);
     }
 }
@@ -20,7 +19,9 @@ pub struct SquareMaterials {
 impl FromWorld for SquareMaterials {
     fn from_world(world: &mut World) -> Self {
         let world = world.cell();
-        let mut materials = world.get_resource_mut::<Assets<StandardMaterial>>().unwrap();
+        let mut materials = world
+            .get_resource_mut::<Assets<StandardMaterial>>()
+            .unwrap();
         SquareMaterials {
             //highlight_color: materials.add(Color::rgb(0.8, 0.3, 0.3).into()),
             //selected_color: materials.add(Color::rgb(0.9, 0.1, 0.1).into()),
@@ -30,10 +31,7 @@ impl FromWorld for SquareMaterials {
     }
 }
 
-fn setup_castle(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>
-) {
+fn setup_castle(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn_bundle(PbrBundle {
             transform: Transform {
@@ -48,15 +46,14 @@ fn setup_castle(
         });
 }
 
-fn create_board (
+fn create_board(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut mat: ResMut<Assets<StandardMaterial>>,
     materials: Res<SquareMaterials>,
-)
-{
+) {
     // Add meshes and materials
-    let mesh = meshes.add(Mesh::from(shape::Plane{size: 1.}));
+    let mesh = meshes.add(Mesh::from(shape::Plane { size: 1. }));
 
     for i in 0..8 {
         for j in 0..8 {
@@ -66,21 +63,17 @@ fn create_board (
                 materials.black_color.clone()
             };
 
-            commands
-                .spawn_bundle(PbrBundle {
-                    mesh: mesh.clone(),
-                    material: initial_mat.clone(),
-                    transform: Transform::from_translation(Vec3::new(i as f32, 0., j as f32)),
-                    ..Default::default()
-                }
-                );
+            commands.spawn_bundle(PbrBundle {
+                mesh: mesh.clone(),
+                material: initial_mat.clone(),
+                transform: Transform::from_translation(Vec3::new(i as f32, 0., j as f32)),
+                ..Default::default()
+            });
         }
     }
 
-    let mesh_plane = meshes.add(Mesh::from(shape::Plane{size: 8.}));
-    let mat = mat.add(StandardMaterial {
-        ..default()
-    });
+    let mesh_plane = meshes.add(Mesh::from(shape::Plane { size: 8. }));
+    let mat = mat.add(StandardMaterial { ..default() });
 
     commands
         .spawn()
@@ -92,6 +85,6 @@ fn create_board (
             transform: Transform::from_xyz(3.5, 0.0, 3.5),
             global_transform: Default::default(),
             visibility: Visibility { is_visible: false },
-            computed_visibility: Default::default()
+            computed_visibility: Default::default(),
         });
 }

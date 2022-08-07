@@ -180,6 +180,7 @@ dependencies = [
  "bevy_mod_picking",
  "bevy_rapier3d",
  "rand",
+ "nalgebra",
 ]
 
 [[package]]
