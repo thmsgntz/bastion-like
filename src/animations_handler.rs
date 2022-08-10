@@ -1,4 +1,20 @@
+use crate::fox::Creature;
 use bevy::prelude::*;
+
+pub struct AnimationHandler;
+impl Plugin for AnimationHandler {
+    fn build(&self, app: &mut App) {
+        app.add_event::<ChangeAnimation>()
+            .add_system_to_stage(CoreStage::PostUpdate, change_animation);
+    }
+}
+
+#[derive(Debug)]
+pub struct ChangeAnimation {
+    pub(crate) target: Entity,
+    pub(crate) index: usize,
+    pub(crate) repeat: bool
+}
 
 pub struct VecSceneHandle(pub Vec<SceneHandle>);
 
@@ -49,6 +65,33 @@ pub fn link_animations(
             commands
                 .entity(top_entity)
                 .insert(AnimationEntityLink(entity.clone()));
+        }
+    }
+}
+
+fn change_animation(
+    mut events: EventReader<ChangeAnimation>,
+    scene_handlers: Res<VecSceneHandle>,
+    mut query_player: Query<&mut AnimationPlayer>,
+    mut query_entity: Query<(Entity, &AnimationEntityLink), With<Creature>>,
+) {
+    for event in events.iter() {
+        // retrouver l'entity
+        info!("Event found! {:#?}", event);
+        for (entity, animation_link) in query_entity.iter_mut() {
+            if entity.id() == event.target.id() {
+                for scene_handler in &scene_handlers.0 {
+                    if scene_handler.creature_entity_id == Some(entity.id()) {
+                        if let Ok(mut player) = query_player.get_mut(animation_link.0) {
+                            if event.repeat {
+                                player.play(scene_handler.vec_animations[event.index].clone_weak());
+                            } else {
+                                player.play(scene_handler.vec_animations[event.index].clone_weak()).repeat();
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

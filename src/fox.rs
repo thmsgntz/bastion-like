@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use rand::Rng;
 use std::time::Duration;
 use crate::animations_handler;
-use crate::animations_handler::{AnimationDuration, AnimationEntityLink, SceneHandle, VecSceneHandle};
+use crate::animations_handler::{AnimationDuration, AnimationEntityLink, ChangeAnimation, SceneHandle, VecSceneHandle};
 
 pub struct FoxPlugin;
 impl Plugin for FoxPlugin {
@@ -106,6 +106,7 @@ fn keyboard_control(
     scene_handlers: Res<VecSceneHandle>,
     mut player_query: Query<&mut AnimationPlayer>,
     mut query: Query<(Entity, &AnimationEntityLink, &mut AnimationDuration), With<Creature>>,
+    mut event_writer: EventWriter<ChangeAnimation>
 ) {
     // TODO:
     // pour simplifier :
@@ -129,16 +130,21 @@ fn keyboard_control(
                 if scene_handler.creature_entity_id == Some(entity.id()) {
                     info!("I found animations for entity : {}", entity.id());
 
-                    if let Ok(mut player) = player_query.get_mut(animation_entity.0) {
-                        let mut rng = rand::thread_rng();
-                        let number = rng.gen_range(0..3);
+                    let mut rng = rand::thread_rng();
+                    let number = rng.gen_range(0..3);
 
-                        let handle_animation = &scene_handler.vec_animations[number];
+                    //let handle_animation = &scene_handler.vec_animations[number];
+                    //player.play(handle_animation.clone_weak()).repeat();
+                    event_writer.send(
+                        ChangeAnimation{
+                            target: entity,
+                            index: number as usize,
+                            repeat: true,
+                        }
+                    );
 
-                        player.play(handle_animation.clone_weak()).repeat();
+                    info!("Sending event!");
 
-                        info!("Playing! animation number {}", number);
-                    }
                 }
             }
         }
