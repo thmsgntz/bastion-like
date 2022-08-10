@@ -14,7 +14,7 @@ impl Plugin for FoxPlugin {
 }
 
 #[derive(Component)]
-pub struct Creature;
+pub struct Creature(String);
 
 fn setup_fox(asset_server: &Res<AssetServer>, scene_path: &str) -> SceneHandle {
     let asset_scene_handle = asset_server.load(scene_path);
@@ -66,7 +66,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .with_children(|parent| {
             parent.spawn_scene(fox_scene_handle.handle.clone());
         })
-        .insert(Creature)
+        .insert(Creature(String::from("Fox")))
         .insert(AnimationDuration {
             time: Timer::new(Duration::from_secs(2), true),
         })
@@ -90,7 +90,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .with_children(|parent| {
             parent.spawn_scene(skelly_scene_handle.handle.clone());
         })
-        .insert(Creature)
+        .insert(Creature(String::from("Skelly")))
         .insert(AnimationDuration {
             time: Timer::new(Duration::from_secs(2), true),
         })
@@ -102,11 +102,18 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 
 fn keyboard_control(
-    mut player_query: Query<&mut AnimationPlayer>,
-    scene_handlers: Res<VecSceneHandle>,
-    mut query: Query<(Entity, &AnimationEntityLink, &mut AnimationDuration), With<Creature>>,
     time: Res<Time>,
+    scene_handlers: Res<VecSceneHandle>,
+    mut player_query: Query<&mut AnimationPlayer>,
+    mut query: Query<(Entity, &AnimationEntityLink, &mut AnimationDuration), With<Creature>>,
 ) {
+    // TODO:
+    // pour simplifier :
+    //   - Créer un Event qui contient l'id de la créature à animer + index de l'animation
+    //   - Faire une fonction un peu comme celle ci, les mêmes query qui :
+    //          - récupère l'event et retrouve la créature par son id
+    //          - récupère son player et joue l'animation à l'index donné
+    // animation_entity contient l'entity id de chaque AnimationPlayer
     for (entity, animation_entity, mut animation_duration) in query.iter_mut() {
         animation_duration.time.tick(time.delta());
 
