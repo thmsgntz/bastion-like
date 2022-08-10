@@ -8,6 +8,7 @@ mod physics;
 mod fox;
 mod skeleton;
 mod animations_handler;
+mod creatures;
 
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::render::camera::Camera3d;
