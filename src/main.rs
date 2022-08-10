@@ -9,6 +9,8 @@ mod fox;
 mod skeleton;
 mod animations_handler;
 mod creatures;
+mod mob;
+mod skelly;
 
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::render::camera::Camera3d;
@@ -125,7 +127,7 @@ fn main() {
         //.add_plugin(chess_pieces::PiecesPlugin)
         //.add_plugin(skeleton::SkeletonPlugin)
         //.add_plugin(physics::PhysicsPlugin)
-        .add_plugin(fox::FoxPlugin)
+        //.add_plugin(fox::FoxPlugin)
         .add_startup_system(setup_camera_and_light)
         .run();
 }

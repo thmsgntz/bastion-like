@@ -16,6 +16,13 @@ pub struct ChangeAnimation {
     pub(crate) repeat: bool
 }
 
+// TODO:
+/*
+Une fonction / event qui permet d'ajouter une SceneHandle à la ressource VecSceneHandle
+lorsqu'une créature est créée. Ou tout faire au début ?
+
+ */
+
 pub struct VecSceneHandle(pub Vec<SceneHandle>);
 
 pub struct SceneHandle {
