@@ -7,13 +7,10 @@ mod animations_handler;
 mod creatures;
 mod inputs;
 mod camera;
-
-
 use bevy::prelude::*;
 use bevy::log::LogSettings;
 
 use bevy::window::PresentMode;
-
 
 
 mod settings {

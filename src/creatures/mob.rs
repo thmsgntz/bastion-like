@@ -5,9 +5,27 @@ use crate::direction::Direction;
 
 pub(crate) struct Gollum;
 
+#[derive(Debug, Clone, Copy, Eq, Hash, PartialEq)]
+enum GollumAnimationId {
+    Idle,
+    IdleAction,
+    SleepStart,
+    Sleep,
+    SleepEnd,
+    Damage,
+    Hit,
+    Die,
+    Walk,
+    Hit2,
+    Rage,
+    Jump,
+    Fly,
+    Land,
+}
+
 impl CreatureTrait for Gollum {
     fn spawn(mut commands: Commands, asset_server: Res<AssetServer>, mut event_writer: EventWriter<AddAnimation>) {
-        let mut scene_handler = setup_gollum(&asset_server, "models/golem/scene.gltf#Scene0");
+        let mut scene_handler = setup_gollum(&asset_server, "models/golem/scene.gltf");
 
         let id_creature = commands
             .spawn()
@@ -37,17 +55,25 @@ impl CreatureTrait for Gollum {
 }
 
 fn setup_gollum(asset_server: &Res<AssetServer>, scene_path: &str) -> SceneHandle {
-    let asset_scene_handle = asset_server.load(scene_path);
+    let asset_scene_handle = asset_server.load(format!("{}{}", scene_path, "#Scene0").as_str());
 
     SceneHandle {
         handle: asset_scene_handle,
         vec_animations: vec![
-            asset_server.load("models/golem/scene.gltf#Animation0"),
-            asset_server.load("models/golem/scene.gltf#Animation1"),
-            asset_server.load("models/golem/scene.gltf#Animation2"),
-            asset_server.load("models/golem/scene.gltf#Animation3"),
-            asset_server.load("models/golem/scene.gltf#Animation4"),
-            asset_server.load("models/golem/scene.gltf#Animation5"),
+            asset_server.load(format!("{}#Animation{}", scene_path, GollumAnimationId::Idle as usize).as_str()),
+            asset_server.load(format!("{}#Animation{}", scene_path, GollumAnimationId::Idle_action as usize).as_str()),
+            asset_server.load(format!("{}#Animation{}", scene_path, GollumAnimationId::sleep_start as usize).as_str()),
+            asset_server.load(format!("{}#Animation{}", scene_path, GollumAnimationId::sleep as usize).as_str()),
+            asset_server.load(format!("{}#Animation{}", scene_path, GollumAnimationId::sleep_end as usize).as_str()),
+            asset_server.load(format!("{}#Animation{}", scene_path, GollumAnimationId::damage as usize).as_str()),
+            asset_server.load(format!("{}#Animation{}", scene_path, GollumAnimationId::hit as usize).as_str()),
+            asset_server.load(format!("{}#Animation{}", scene_path, GollumAnimationId::die as usize).as_str()),
+            asset_server.load(format!("{}#Animation{}", scene_path, GollumAnimationId::walk as usize).as_str()),
+            asset_server.load(format!("{}#Animation{}", scene_path, GollumAnimationId::hit2 as usize).as_str()),
+            asset_server.load(format!("{}#Animation{}", scene_path, GollumAnimationId::rage as usize).as_str()),
+            asset_server.load(format!("{}#Animation{}", scene_path, GollumAnimationId::jump as usize).as_str()),
+            asset_server.load(format!("{}#Animation{}", scene_path, GollumAnimationId::fly as usize).as_str()),
+            asset_server.load(format!("{}#Animation{}", scene_path, GollumAnimationId::land as usize).as_str()),
         ],
         creature_entity_id: None,
     }

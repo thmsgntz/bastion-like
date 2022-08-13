@@ -7,12 +7,8 @@ pub(crate) mod mob;
 
 /*
 TODO:
- 0,5. Faire spawn des mobs un après l'autre, pour voir si animations_handler marche bien
-    -> Skelly spawned et start_animation() lors d'un ajout de créature codée
-    -> Faire spawn un autre mob maintenant
  1. Déplacer les fonctions de skeleton.rs sur les déplacements de Skelly ici
  2. Essayer d'en faire des functions génériques?
-
  */
 
 const ENTITY_SPEED: f32 = 2.0;

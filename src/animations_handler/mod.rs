@@ -45,15 +45,9 @@ pub struct RemoveAnimation {
 
 /// Ressource qui contient un vecteur de SceneHandle
 /// qui définit tous les animations des créatures
+#[derive(Default)]
 pub struct VecSceneHandle(pub Vec<SceneHandle>);
 
-impl Default for VecSceneHandle {
-    fn default() -> Self {
-        Self {
-            0: vec![]
-        }
-    }
-}
 
 #[derive(Clone, Debug)]
 pub struct SceneHandle {
