@@ -8,7 +8,7 @@ mod creatures;
 mod inputs;
 mod camera;
 
-use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
+
 use bevy::prelude::*;
 use bevy::log::LogSettings;
 

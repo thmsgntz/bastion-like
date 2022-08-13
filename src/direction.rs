@@ -84,14 +84,14 @@ fn is_keyboard_any_arrow_pressed(keyboard_input: &Input<KeyCode>) -> bool {
     true
 }
 
-static KEYS_ARROWS: &'static [KeyCode] = &[
+static KEYS_ARROWS: &[KeyCode] = &[
     KeyCode::Up,
     KeyCode::Right,
     KeyCode::Left,
     KeyCode::Down,
     KeyCode::LShift,
 ];
-static KEYS_ACTIONS: &'static [KeyCode] = &[
+static KEYS_ACTIONS: &[KeyCode] = &[
     KeyCode::Space,
     KeyCode::Numpad1,
     KeyCode::Numpad2,
@@ -113,7 +113,7 @@ pub fn get_pressed_keys_of_interest(keyboard_input: &Input<KeyCode>) -> Vec<KeyC
         if KEYS_ARROWS.contains(*x) || KEYS_ACTIONS.contains(*x) {
             return true;
         }
-        return false;
+        false
     });
     let mut vec = <Vec<KeyCode>>::new();
 

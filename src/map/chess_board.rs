@@ -82,8 +82,8 @@ fn create_board(
         .insert(RigidBody::Fixed)
         .insert(Collider::cuboid(4.0, 0.1, 4.0))
         .insert_bundle(PbrBundle {
-            mesh: mesh_plane.clone(),
-            material: mat.clone(),
+            mesh: mesh_plane,
+            material: mat,
             transform: Transform::from_xyz(3.5, 0.0, 3.5),
             global_transform: Default::default(),
             visibility: Visibility { is_visible: false },

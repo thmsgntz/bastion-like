@@ -116,7 +116,7 @@ pub fn link_animations(
         } else {
             commands
                 .entity(top_entity)
-                .insert(AnimationEntityLink(entity.clone()));
+                .insert(AnimationEntityLink(entity));
         }
     }
 }

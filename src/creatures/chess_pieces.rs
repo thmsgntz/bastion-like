@@ -157,37 +157,37 @@ fn create_pieces(
         &mut commands,
         black_material.clone(),
         PieceColor::Black,
-        queen_handle.clone(),
+        queen_handle,
         (7, 3),
     );
     spawn_king(
         &mut commands,
         black_material.clone(),
         PieceColor::Black,
-        king_handle.clone(),
-        king_cross_handle.clone(),
+        king_handle,
+        king_cross_handle,
         (7, 4),
     );
     spawn_bishop(
         &mut commands,
         black_material.clone(),
         PieceColor::Black,
-        bishop_handle.clone(),
+        bishop_handle,
         (7, 5),
     );
     spawn_knight(
         &mut commands,
         black_material.clone(),
         PieceColor::Black,
-        knight_1_handle.clone(),
-        knight_2_handle.clone(),
+        knight_1_handle,
+        knight_2_handle,
         (7, 6),
     );
     spawn_rook(
         &mut commands,
         black_material.clone(),
         PieceColor::Black,
-        rook_handle.clone(),
+        rook_handle,
         (7, 7),
     );
 
