@@ -1,4 +1,4 @@
-extern crate core;
+//extern crate core;
 //#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod direction;
@@ -6,12 +6,11 @@ mod map;
 mod animations_handler;
 mod creatures;
 mod inputs;
+mod camera;
 
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
-use bevy::render::camera::Camera3d;
-use bevy::{prelude::*, render::camera::ScalingMode};
+use bevy::prelude::*;
 use bevy::log::LogSettings;
-use bevy_rapier3d::prelude::*;
 
 use bevy::window::PresentMode;
 
@@ -28,28 +27,7 @@ mod settings {
     pub const WINDOW_MODE: WindowMode = WindowMode::Windowed;
 }
 
-fn create_camera() -> OrthographicCameraBundle<Camera3d> {
-    // should consider adding: https://github.com/BlackPhlox/bevy_config_cam
-
-    let transform =
-        Transform::from_xyz(-1.0, 5.0, -1.0).looking_at(Vec3::new(4.0, 0.0, 4.0), Vec3::Y);
-
-    let mut camera = OrthographicCameraBundle::new_3d();
-    camera.orthographic_projection = OrthographicProjection {
-        scale: 4.0, // the lower, the higher is the zoom
-        scaling_mode: ScalingMode::FixedVertical,
-        ..default()
-    }
-    .into();
-    camera.transform = transform;
-    camera
-}
-
-
-
-fn setup_camera_and_light(mut commands: Commands) {
-    // camera
-    commands.spawn_bundle(create_camera());
+fn setup_light(mut commands: Commands) {
 
     // light
     commands.spawn_bundle(PointLightBundle {
@@ -76,21 +54,15 @@ fn main() {
         })
         .add_plugins(DefaultPlugins)
         .add_plugin(inputs::InputsPlugin)
+        .add_plugin(camera::CameraPlugin)
         .add_plugin(animations_handler::AnimationHandler)
         .add_plugin(map::MapPlugin)
         //.add_plugin(LogDiagnosticsPlugin::default())
         //.add_plugin(FrameTimeDiagnosticsPlugin::default())
         //.add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
         //.add_plugin(RapierDebugRenderPlugin::default())
-        //.add_startup_system(draw_repere)
-        //.add_plugin(chess_pieces::PiecesPlugin)
-        //.add_plugin(skeleton::SkeletonPlugin)
-        //.add_plugin(physics::PhysicsPlugin)
-        //.add_plugin(fox::FoxPlugin)
         .add_plugin(creatures::CreaturePlugin)
-        .add_startup_system(setup_camera_and_light)
-
-
+        .add_startup_system(setup_light)
 
         .run();
 }

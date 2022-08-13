@@ -15,15 +15,16 @@
   - [x] attack
   - [x] run
   - [x] die
-- [ ] Add physic => https://rapier.rs/
+- [x] Add physic => https://rapier.rs/
   - Links
     - https://www.rapier.rs/docs/user_guides/bevy_plugin/getting_started_bevy
     - https://github.com/dimforge/bevy_rapier/tree/master/bevy_rapier3d/examples
     - https://www.reddit.com/r/bevy/comments/uoqmm0/gryazevichki_vehicle_simulation_prototype_using/
     - https://www.reddit.com/r/bevy/comments/sz06sc/how_to_properly_handle_rapier_collision_events/
-  - [ ] Collision
-  - [ ] Gravity
-- [ ] Add a caster model !
+  - [x] Collision
+  - [x] Gravity
+- Refacto and AnimationPlayer refacto
+- [ ] Add a castle model !
   - [ ] Model in gltf
     - learn a bit about this format
   - [ ] Add an inspector Camera that follows the model to place it

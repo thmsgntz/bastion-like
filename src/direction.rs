@@ -1,5 +1,4 @@
-use crate::{Input, KeyCode, Quat, Vec3};
-use nalgebra;
+use crate::{Input, KeyCode, Vec3};
 use std::f32::consts::PI;
 
 pub const ENTITY_LOOKING_UP: f32 = 45.0 * PI / 180.0;
@@ -11,7 +10,7 @@ const ENTITY_LOOKING_DOWN: f32 = -(3.0 * 45.0) * PI / 180.0;
 const ENTITY_LOOKING_DOWN_LEFT: f32 = -(4.0 * 45.0) * PI / 180.0;
 const ENTITY_LOOKING_DOWN_RIGHT: f32 = -(2.0 * 45.0) * PI / 180.0;
 
-#[derive(PartialEq, Debug, Copy, Clone)]
+#[derive(PartialEq, Copy, Clone)]
 pub enum Direction {
     Up,
     UpRight,

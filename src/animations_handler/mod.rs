@@ -8,9 +8,12 @@ impl Plugin for AnimationHandler {
             .add_event::<ChangeAnimation>()
             .add_event::<AddAnimation>()
             .add_event::<RemoveAnimation>()
+            .add_system(link_animations)
+            .add_system(start_animation.after(link_animations))
             .add_system_to_stage(CoreStage::PostUpdate, add_animation)
-            .add_system_to_stage(CoreStage::PostUpdate, change_animation)
-            .add_system_to_stage(CoreStage::PostUpdate, remove_animation);
+            .add_system_to_stage(CoreStage::PostUpdate, remove_animation)
+            .add_system_to_stage(CoreStage::PostUpdate, change_animation.after(add_animation))
+        ;
     }
 }
 
@@ -27,7 +30,7 @@ impl Plugin for AnimationHandler {
 /// ```
 #[derive(Debug)]
 pub struct ChangeAnimation {
-    pub(crate) target: Entity,
+    pub(crate) target: u32,
     pub(crate) index: usize,
     pub(crate) repeat: bool
 }
@@ -37,7 +40,7 @@ pub struct AddAnimation {
 }
 
 pub struct RemoveAnimation {
-    pub entity_id: Entity,
+    pub entity_id: u32,
 }
 
 /// Ressource qui contient un vecteur de SceneHandle
@@ -118,11 +121,28 @@ pub fn link_animations(
     }
 }
 
+/// Une fois que link_animations() a ajouté un AnimationEntityLink :
+/// Lancer la première animation !
+pub fn start_animation(
+    query_entity: Query<Entity, (With<Creature>, Added<AnimationEntityLink>)>,
+    mut writer: EventWriter<ChangeAnimation>,
+) {
+    for entity in query_entity.iter() {
+        writer.send(
+            ChangeAnimation {
+                target: entity.id(),
+                index: 0,
+                repeat: true
+            }
+        )
+    }
+}
+
 /// Fonction qui lit un Event ChangeAnimation et :
 ///   1. D'après l'id de l'entité à animer (event.target.id())
 ///   2. Retrouver l'animationPlayer associé en parcourant les tuples (Entity, &AnimationEntityLink)
 ///      ```
-///         creature.id() == event_creature_à_animer.target.id()
+///         creature.id() == event_creature_à_animer.target
 ///      ```
 ///   3. Une fois le player retrouvé, on cherche les animations dans VecSceneHandle
 ///      ```
@@ -138,14 +158,14 @@ fn change_animation(
         // retrouver l'entity
         debug!("change_animation::Event found! {:#?}", event);
         for (entity, animation_link) in query_entity.iter_mut() {
-            if entity.id() == event.target.id() {  // on a retrouvé le player associé à l'entité
+            if entity.id() == event.target {  // on a retrouvé le player associé à l'entité
                 for scene_handler in &scene_handlers.0 {
                     if scene_handler.creature_entity_id == Some(entity.id()) {  // on retrouve ses animations SceneHandler
                         if let Ok(mut player) = query_player.get_mut(animation_link.0) {
                             if event.repeat {
-                                player.play(scene_handler.vec_animations[event.index].clone_weak());
-                            } else {
                                 player.play(scene_handler.vec_animations[event.index].clone_weak()).repeat();
+                            } else {
+                                player.play(scene_handler.vec_animations[event.index].clone_weak());
                             }
                         }
                     }
@@ -164,7 +184,7 @@ fn add_animation(
         debug!("AddAnimation: {:#?}", event.scene_handler);
         vec_scene_handlers.0.push(
             event.scene_handler.clone()
-        )
+        );
     }
 }
 
@@ -172,11 +192,11 @@ fn remove_animation(
     mut events: EventReader<RemoveAnimation>,
     mut vec_scene_handlers: ResMut<VecSceneHandle>,
 ) {
-    let mut found = false;
+    let mut found ;
     for event in events.iter() {
         found = false;
         for i in 0..vec_scene_handlers.0.len() {
-            if !found && vec_scene_handlers.0[i].creature_entity_id == Some(event.entity_id.id()) {
+            if !found && vec_scene_handlers.0[i].creature_entity_id == Some(event.entity_id) {
                 debug!("Remove_animation: entity found, removing.");
                 found = true;
                 vec_scene_handlers.0.swap_remove(i);

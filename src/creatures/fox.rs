@@ -136,7 +136,7 @@ fn keyboard_control(
                     //player.play(handle_animation.clone_weak()).repeat();
                     event_writer.send(
                         ChangeAnimation{
-                            target: entity,
+                            target: entity.id(),
                             index: number as usize,
                             repeat: true,
                         }

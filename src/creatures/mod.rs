@@ -1,25 +1,34 @@
 use bevy::prelude::*;
-use bevy::utils::HashMap;
+use crate::animations_handler::AddAnimation;
 
-mod skelly;
+pub(crate) mod skelly;
 mod chess_pieces;
+pub(crate) mod mob;
 
 /*
 TODO:
  0,5. Faire spawn des mobs un après l'autre, pour voir si animations_handler marche bien
+    -> Skelly spawned et start_animation() lors d'un ajout de créature codée
+    -> Faire spawn un autre mob maintenant
  1. Déplacer les fonctions de skeleton.rs sur les déplacements de Skelly ici
  2. Essayer d'en faire des functions génériques?
 
  */
 
-pub const ENTITY_SPEED: f32 = 2.0;
-pub const ENTITY_SPEED_ROTATION: f32 = 0.1;
+const ENTITY_SPEED: f32 = 2.0;
+const ENTITY_SPEED_ROTATION: f32 = 0.1;
+
+pub trait CreatureTrait {
+    fn spawn(commands: Commands, asset_server: Res<AssetServer>, event_writer: EventWriter<AddAnimation>);
+}
+
+/// Player marker
+#[derive(Component)]
+pub(crate) struct Player;
 
 pub struct CreaturePlugin;
 impl Plugin for CreaturePlugin {
-    fn build(&self, app: &mut App) {
-        app.add_plugin(skelly::SkellyPlugin);
-    }
+    fn build(&self, app: &mut App) {}
 }
 
 //#[derive(Bundle, Clone)]
