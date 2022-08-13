@@ -1,8 +1,10 @@
+
+
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
-pub struct MapPlugin;
-impl Plugin for MapPlugin {
+pub struct Board;
+impl Plugin for Board {
     fn build(&self, app: &mut App) {
         app.init_resource::<SquareMaterials>()
             .add_startup_system(create_board);

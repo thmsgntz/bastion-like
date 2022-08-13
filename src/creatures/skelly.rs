@@ -1,14 +1,14 @@
 use crate::creatures;
-use crate::creatures::{Creature, HashMapAnimations};
+use crate::creatures::Creature;
 use crate::direction::Direction;
 use bevy::prelude::*;
-use crate::animations_handler::SceneHandle;
+use bevy::utils::tracing::event;
+use crate::animations_handler::{AddAnimation, SceneHandle};
 
 pub struct SkellyPlugin;
 impl Plugin for SkellyPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(setup)
-            .add_system(setup_scene_once_loaded);
+        app.add_startup_system(setup);
     }
 }
 
@@ -16,7 +16,7 @@ impl Plugin for SkellyPlugin {
 #[derive(Component)]
 pub(crate) struct Skelly;
 
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut event_writer: EventWriter<AddAnimation>) {
 
     let mut skelly_scene_handle = setup_skelly(&asset_server, "models/skeleton/scene.gltf#Scene0");
 
@@ -35,9 +35,14 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             parent.spawn_scene(skelly_scene_handle.handle.clone());
         })
         .insert(Creature(String::from("Skelly")))
+        .insert(Skelly)
         .id();
 
     skelly_scene_handle.creature_entity_id = Some(skelly_id.id());
+
+    event_writer.send(AddAnimation{
+        scene_handler: skelly_scene_handle
+    });
 }
 
 

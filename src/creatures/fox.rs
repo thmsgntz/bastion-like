@@ -1,4 +1,6 @@
 use bevy::prelude::*;
+use crate::creatures;
+use crate::creatures::Creature;
 use rand::Rng;
 use std::time::Duration;
 use crate::animations_handler;
@@ -12,9 +14,6 @@ impl Plugin for FoxPlugin {
             .add_system(keyboard_control);
     }
 }
-
-#[derive(Component)]
-pub struct Creature(String);
 
 fn setup_fox(asset_server: &Res<AssetServer>, scene_path: &str) -> SceneHandle {
     let asset_scene_handle = asset_server.load(scene_path);

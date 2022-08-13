@@ -4,20 +4,19 @@ extern crate core;
 mod chess_pieces;
 mod direction;
 mod map;
-mod physics;
-mod fox;
-mod skeleton;
 mod animations_handler;
 mod creatures;
-mod mob;
-mod skelly;
+mod inputs;
 
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::render::camera::Camera3d;
 use bevy::{prelude::*, render::camera::ScalingMode};
+use bevy::log::LogSettings;
 use bevy_rapier3d::prelude::*;
 
 use bevy::window::PresentMode;
+
+
 
 mod settings {
     use bevy::window::WindowMode;
@@ -116,18 +115,27 @@ fn main() {
             present_mode: PresentMode::Mailbox,
             ..Default::default()
         })
+        .insert_resource(LogSettings {
+            filter: "info,wgpu_core=warn,wgpu_hal=warn,bastion_like=debug".into(),
+            level: bevy::log::Level::DEBUG,
+        })
         .add_plugins(DefaultPlugins)
+        .add_plugin(inputs::InputsPlugin)
         .add_plugin(animations_handler::AnimationHandler)
+        .add_plugin(map::MapPlugin)
         //.add_plugin(LogDiagnosticsPlugin::default())
         //.add_plugin(FrameTimeDiagnosticsPlugin::default())
         //.add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
         //.add_plugin(RapierDebugRenderPlugin::default())
         //.add_startup_system(draw_repere)
-        .add_plugin(map::MapPlugin)
         //.add_plugin(chess_pieces::PiecesPlugin)
         //.add_plugin(skeleton::SkeletonPlugin)
         //.add_plugin(physics::PhysicsPlugin)
         //.add_plugin(fox::FoxPlugin)
+        .add_plugin(creatures::CreaturePlugin)
         .add_startup_system(setup_camera_and_light)
+
+
+
         .run();
 }

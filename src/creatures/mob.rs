@@ -1,5 +1,5 @@
 use crate::creatures;
-use crate::creatures::{Creature, HashMapAnimations};
+use crate::creatures::Creature;
 use bevy::prelude::*;
 use crate::direction::Direction;
 use crate::skelly::Skelly;
