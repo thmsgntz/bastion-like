@@ -1,7 +1,6 @@
 extern crate core;
 //#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod chess_pieces;
 mod direction;
 mod map;
 mod animations_handler;
@@ -46,51 +45,7 @@ fn create_camera() -> OrthographicCameraBundle<Camera3d> {
     camera
 }
 
-fn draw_repere(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-) {
-    commands.spawn_bundle(PbrBundle {
-        mesh: meshes.add(Mesh::from(shape::Icosphere {
-            radius: 0.1,
-            subdivisions: 1,
-        })),
-        material: materials.add(Color::rgb(1.0, 1.0, 1.0).into()),
-        transform: Transform::from_xyz(0.0, 0.0, 0.0),
-        ..default()
-    });
 
-    commands.spawn_bundle(PbrBundle {
-        mesh: meshes.add(Mesh::from(shape::Icosphere {
-            radius: 0.1,
-            subdivisions: 1,
-        })),
-        material: materials.add(Color::rgb(1.0, 0.0, 0.0).into()),
-        transform: Transform::from_xyz(1.0, 0.0, 0.0),
-        ..default()
-    });
-
-    commands.spawn_bundle(PbrBundle {
-        mesh: meshes.add(Mesh::from(shape::Icosphere {
-            radius: 0.1,
-            subdivisions: 1,
-        })),
-        material: materials.add(Color::rgb(0.0, 1.0, 0.0).into()),
-        transform: Transform::from_xyz(0.0, 1.0, 0.0),
-        ..default()
-    });
-
-    commands.spawn_bundle(PbrBundle {
-        mesh: meshes.add(Mesh::from(shape::Icosphere {
-            radius: 0.1,
-            subdivisions: 1,
-        })),
-        material: materials.add(Color::rgb(0.0, 0.0, 1.0).into()),
-        transform: Transform::from_xyz(0.0, 0.0, 1.0),
-        ..default()
-    });
-}
 
 fn setup_camera_and_light(mut commands: Commands) {
     // camera
