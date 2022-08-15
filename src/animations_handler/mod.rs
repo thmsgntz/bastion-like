@@ -1,5 +1,9 @@
-use crate::creatures::Creature;
+use crate::creatures::{Creature};
 use bevy::prelude::*;
+use bevy::utils::HashMap;
+use std::borrow::{BorrowMut};
+use std::time::Duration;
+
 
 pub struct AnimationHandler;
 impl Plugin for AnimationHandler {
@@ -12,8 +16,8 @@ impl Plugin for AnimationHandler {
             .add_system(start_animation.after(link_animations))
             .add_system_to_stage(CoreStage::PostUpdate, add_animation)
             .add_system_to_stage(CoreStage::PostUpdate, remove_animation)
-            .add_system_to_stage(CoreStage::PostUpdate, change_animation.after(add_animation))
-        ;
+            .add_system_to_stage(CoreStage::PostUpdate, update_animation.after(add_animation))
+            .add_system_to_stage(CoreStage::PostUpdate, checker_animation_duration.after(update_animation));
     }
 }
 
@@ -32,34 +36,87 @@ impl Plugin for AnimationHandler {
 pub struct ChangeAnimation {
     pub(crate) target: u32,
     pub(crate) index: usize,
-    pub(crate) repeat: bool
+    pub(crate) repeat: bool,
 }
 
+/// Event utilisé pour ajouter une animation
 pub struct AddAnimation {
-    pub scene_handler: SceneHandle
+    pub scene_handler: SceneHandle,
 }
 
+/// Event utilisé pour retirer une animation
 pub struct RemoveAnimation {
     pub entity_id: u32,
 }
 
+
+
 /// Ressource qui contient un vecteur de SceneHandle
 /// qui définit tous les animations des créatures
+/// Ajouté au world:  app.insert_resource::<VecSceneHandle>(Default::default())
 #[derive(Default)]
 pub struct VecSceneHandle(pub Vec<SceneHandle>);
 
+/// HashMap contenant un tuple: (duration_animation, handle_animation)
+/// La Hashmap est créée dans la fonction spawn de chaque créature
+/// Updated par add_animation et remove_animation
+/// Utilisée par update_animation
+#[derive(Clone, Debug)]
+pub struct HashMapAnimationClip(HashMap<usize, (f32, Handle<AnimationClip>)>);
+
+impl HashMapAnimationClip {
+    pub fn get_pair(&self, ind: usize) -> Option<&(f32, Handle<AnimationClip>)> {
+        self.0.get(&ind)
+    }
+
+    pub fn new() -> Self {
+        HashMapAnimationClip(HashMap::new())
+    }
+
+    pub fn insert(
+        &mut self,
+        k: usize,
+        duration: f32,
+        handle: Handle<AnimationClip>,
+    ) -> Option<(f32, Handle<AnimationClip>)> {
+        self.0.insert(k, (duration, handle))
+    }
+}
+
+/// utilisé par change_animation() pour mettre à jour la prochaine animation
+#[derive(Component, Debug)]
+pub struct AnimationStopWatch {
+    /// if of the entity containing the scene
+    pub creature_entity_id: Option<u32>,
+    pub index_animation: usize,
+    pub time: Timer,
+}
+
+impl AnimationStopWatch {
+    fn reset_timer(&mut self) {
+        self.time.reset();
+    }
+
+    fn is_over(&self) -> bool {
+        self.time.finished()
+    }
+
+    fn tick(&mut self, delta: Duration) {
+        self.time.tick(delta);
+    }
+}
 
 #[derive(Clone, Debug)]
 pub struct SceneHandle {
+    /// handle of the scene
     pub handle: Handle<Scene>,
-    pub vec_animations: Vec<Handle<AnimationClip>>,
-    //is_loaded: bool,
-    pub creature_entity_id: Option<u32>, // creature id associated with this scene
-}
 
-#[derive(Component)]
-pub struct AnimationDuration {
-    pub time: Timer,
+    /// vector of AnimationClip
+    //pub vec_animations: Vec<Handle<AnimationClip>>,
+    pub vec_animations: HashMapAnimationClip,
+
+    /// if of the entity containing the scene
+    pub creature_entity_id: Option<u32>,
 }
 
 /// Composant qui mis à jour par link_animations()
@@ -91,7 +148,7 @@ fn get_top_parent(mut curr_entity: Entity, parent_query: &Query<&Parent>) -> Ent
 
 /// Fonction qui lie une entité avec son AnimationPlayer par le composant AnimationEntityLink.
 /// Voir: https://github.com/bevyengine/bevy/discussions/5564#discussion-4275825
-pub fn link_animations(
+fn link_animations(
     player_query: Query<Entity, Added<AnimationPlayer>>,
     parent_query: Query<&Parent>,
     animations_entity_link_query: Query<&AnimationEntityLink>,
@@ -117,18 +174,16 @@ pub fn link_animations(
 
 /// Une fois que link_animations() a ajouté un AnimationEntityLink :
 /// Lancer la première animation !
-pub fn start_animation(
+fn start_animation(
     query_entity: Query<Entity, (With<Creature>, Added<AnimationEntityLink>)>,
     mut writer: EventWriter<ChangeAnimation>,
 ) {
     for entity in query_entity.iter() {
-        writer.send(
-            ChangeAnimation {
-                target: entity.id(),
-                index: 0,
-                repeat: true
-            }
-        )
+        writer.send(ChangeAnimation {
+            target: entity.id(),
+            index: 0,
+            repeat: false,
+        })
     }
 }
 
@@ -142,25 +197,44 @@ pub fn start_animation(
 ///      ```
 ///         scene_handler_random_creature.id() == event_creature_à_animer.id()
 ///      ```
-fn change_animation(
+fn update_animation(
     mut events: EventReader<ChangeAnimation>,
     scene_handlers: Res<VecSceneHandle>,
     mut query_player: Query<&mut AnimationPlayer>,
-    mut query_entity: Query<(Entity, &AnimationEntityLink), With<Creature>>,
+    mut query_entity: Query<(Entity, &AnimationEntityLink, &mut Creature)>,
+    mut query_stopwatch: Query<&mut AnimationStopWatch>,
 ) {
     for event in events.iter() {
         // retrouver l'entity
-        debug!("change_animation::Event found! {:#?}", event);
-        for (entity, animation_link) in query_entity.iter_mut() {
-            if entity.id() == event.target {  // on a retrouvé le player associé à l'entité
+        debug!("Event found! {:#?}", event);
+        for (entity, animation_link, creature) in query_entity.iter_mut() {
+            if entity.id() == event.target {
+                // on a retrouvé le player associé à l'entité
+                debug!("  > entity trouvé!");
+                let mut current_animation_index = creature.current_animation_index;
                 for scene_handler in &scene_handlers.0 {
-                    if scene_handler.creature_entity_id == Some(entity.id()) {  // on retrouve ses animations SceneHandler
+                    if scene_handler.creature_entity_id == Some(entity.id()) {
+                        // on retrouve ses animations SceneHandler
+                        debug!("  > scene_handler trouvé!");
                         if let Ok(mut player) = query_player.get_mut(animation_link.0) {
+
+                            let (duration, animation) =
+                                &scene_handler.vec_animations.get_pair(event.index).unwrap();
                             if event.repeat {
-                                player.play(scene_handler.vec_animations[event.index].clone_weak()).repeat();
+                                player.play(animation.clone_weak()).repeat();
                             } else {
-                                player.play(scene_handler.vec_animations[event.index].clone_weak());
+                                player.play(animation.clone_weak());
+
+                                for mut stopwatch in query_stopwatch.iter_mut() {
+                                    if stopwatch.creature_entity_id == Some(entity.id()) {
+                                        stopwatch.index_animation = event.index;
+                                        stopwatch.time.set_duration(Duration::from_secs_f32(*duration));
+                                    }
+                                }
                             }
+                            current_animation_index.0 = event.index;
+
+
                         }
                     }
                 }
@@ -170,14 +244,50 @@ fn change_animation(
 }
 
 
+/// Récupère les stopwatch
+/// Met à jour les ticks des stopwatch
+/// Si une stopwacth est terminée :
+///     Une animation est terminée
+///     Récupérer la créature de l'animation et appeler sa fonction update_animation() pour choisir la prochaine animation
+fn checker_animation_duration (
+    query_entity: Query<(Entity, &Creature)>,
+    mut query_stopwatch: Query<&mut AnimationStopWatch>,
+    mut event_writer: EventWriter<ChangeAnimation>,
+    time: Res<Time>,
+) {
+    for mut stopwatch in query_stopwatch.iter_mut() {
+        stopwatch.tick(time.delta());
+
+        if stopwatch.is_over() {
+            // play new animation for the current entity
+            debug!("Timer finished for entity {}", stopwatch.creature_entity_id.unwrap());
+            stopwatch.time.reset();  // en attendant que update_animation vienne faire le travail
+
+            for (entity, creature) in query_entity.iter() {
+                if Some(entity.id()) == stopwatch.creature_entity_id {
+                    creature.update_animation(stopwatch.creature_entity_id.unwrap(), stopwatch.index_animation, event_writer.borrow_mut());
+                }
+            }
+        }
+    }
+}
+
 fn add_animation(
     mut events: EventReader<AddAnimation>,
     mut vec_scene_handlers: ResMut<VecSceneHandle>,
+    mut commands: Commands,
 ) {
     for event in events.iter() {
         debug!("AddAnimation: {:#?}", event.scene_handler);
-        vec_scene_handlers.0.push(
-            event.scene_handler.clone()
+
+        vec_scene_handlers.0.push(event.scene_handler.clone());
+
+        commands.spawn().insert(
+            AnimationStopWatch {
+                creature_entity_id: event.scene_handler.creature_entity_id,
+                index_animation: 0,
+                time: Timer::new(Duration::from_secs(1000.0 as u64), false)
+            }
         );
     }
 }
@@ -186,11 +296,12 @@ fn remove_animation(
     mut events: EventReader<RemoveAnimation>,
     mut vec_scene_handlers: ResMut<VecSceneHandle>,
 ) {
-    let mut found ;
+    let mut found;
     for event in events.iter() {
         found = false;
         for i in 0..vec_scene_handlers.0.len() {
             if !found && vec_scene_handlers.0[i].creature_entity_id == Some(event.entity_id) {
+
                 debug!("Remove_animation: entity found, removing.");
                 found = true;
                 vec_scene_handlers.0.swap_remove(i);

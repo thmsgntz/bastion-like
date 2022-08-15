@@ -1,11 +1,10 @@
-use crate::creatures::{Creature, CreatureTrait, Player};
+use crate::creatures::{Creature, CreatureTrait, CurrentAnimationIndex, Player, TypeCreature};
 use bevy::prelude::*;
-use crate::animations_handler::{AddAnimation, SceneHandle};
-
-pub(crate) struct Skelly;
+use crate::animations_handler::{AddAnimation, ChangeAnimation, HashMapAnimationClip, SceneHandle};
 
 #[derive(Debug, Clone, Copy, Eq, Hash, PartialEq)]
 enum SkellyAnimationId {
+    Spawn,         // ?
     Idle,          // duration: 1.5800002
     LookingAround, // duration: 3.1800003
     Attack,        // duration: 2.3200002
@@ -15,9 +14,71 @@ enum SkellyAnimationId {
     Fall,          // ?
     Hit,           // ?
     Die,           // ?
-    Spawn,         // ?
     Hanged,        // ?
     None,          // ?
+}
+
+impl From<usize> for SkellyAnimationId {
+    fn from(u: usize) -> Self {
+        match u {
+            0 => {SkellyAnimationId::Spawn},
+            1 => {SkellyAnimationId::Idle},
+            2 => {SkellyAnimationId::LookingAround},
+            3 => {SkellyAnimationId::Attack},
+            4 => {SkellyAnimationId::Yell},
+            5 => {SkellyAnimationId::Walk},
+            6 => {SkellyAnimationId::Run},
+            7 => {SkellyAnimationId::Fall},
+            8 => {SkellyAnimationId::Hit},
+            9 => {SkellyAnimationId::Die},
+            10  => {SkellyAnimationId::Hanged},
+            _ => SkellyAnimationId::None,
+        }
+    }
+}
+
+impl Into<usize> for SkellyAnimationId {
+    fn into(self) -> usize {
+        match self {
+            SkellyAnimationId::Spawn => {0}
+            SkellyAnimationId::Idle => {1}
+            SkellyAnimationId::LookingAround => {2}
+            SkellyAnimationId::Attack => {3}
+            SkellyAnimationId::Yell => {4}
+            SkellyAnimationId::Walk => {5}
+            SkellyAnimationId::Run => {6}
+            SkellyAnimationId::Fall => {7}
+            SkellyAnimationId::Hit => {8}
+            SkellyAnimationId::Die => {9}
+            SkellyAnimationId::Hanged => {10}
+            SkellyAnimationId::None => {11}
+        }
+    }
+}
+
+impl Into<CurrentAnimationIndex> for SkellyAnimationId {
+    fn into(self) -> CurrentAnimationIndex {
+        CurrentAnimationIndex(self.into())
+    }
+}
+
+impl SkellyAnimationId {
+    fn get_duration (&self) -> f32 {
+        match self {
+            SkellyAnimationId::Idle => {SKELLY_ANIM_DURATION_IDLE}
+            SkellyAnimationId::LookingAround => {SKELLY_ANIM_DURATION_LOOKING_AROUND}
+            SkellyAnimationId::Attack => {SKELLY_ANIM_DURATION_ATTACK}
+            SkellyAnimationId::Yell => {SKELLY_ANIM_DURATION_YELL}
+            SkellyAnimationId::Walk => {SKELLY_ANIM_DURATION_WALK}
+            SkellyAnimationId::Run => {SKELLY_ANIM_DURATION_RUN}
+            SkellyAnimationId::Fall => {SKELLY_ANIM_DURATION_FALL}
+            SkellyAnimationId::Hit => {SKELLY_ANIM_DURATION_HIT}
+            SkellyAnimationId::Die => {SKELLY_ANIM_DURATION_DIE}
+            SkellyAnimationId::Spawn => {SKELLY_ANIM_DURATION_SPAWN}
+            SkellyAnimationId::Hanged => {SKELLY_ANIM_DURATION_HANGED}
+            SkellyAnimationId::None => {0.0}
+        }
+    }
 }
 
 const SKELLY_ANIM_DURATION_IDLE: f32 = 1.58;
@@ -29,9 +90,10 @@ const SKELLY_ANIM_DURATION_RUN: f32 = 0.78;
 const SKELLY_ANIM_DURATION_FALL: f32 = 1.0; // TO CHECK
 const SKELLY_ANIM_DURATION_HIT: f32 = 0.6; // TO CHECK
 const SKELLY_ANIM_DURATION_DIE: f32 = 1.0; // TO CHECK
-const SKELLY_ANIM_DURATION_SPAWN: f32 = 1.58; // TO CHECK
+const SKELLY_ANIM_DURATION_SPAWN: f32 = 1.38; // TO CHECK
 const SKELLY_ANIM_DURATION_HANGED: f32 = 1.58; // TO CHECK
 
+pub(crate) struct Skelly;
 impl CreatureTrait for Skelly {
     fn spawn(mut commands: Commands, asset_server: Res<AssetServer>, mut event_writer: EventWriter<AddAnimation>) {
         let mut skelly_scene_handle = setup_skelly(&asset_server, "models/skeleton/scene.gltf");
@@ -50,7 +112,10 @@ impl CreatureTrait for Skelly {
             .with_children(|parent| {
                 parent.spawn_scene(skelly_scene_handle.handle.clone());
             })
-            .insert(Creature(String::from("Skelly")))
+            .insert(Creature {
+                type_creature: TypeCreature::skelly,
+                current_animation_index: SkellyAnimationId::Idle.into(),
+            })
             .insert(Player)
             .id()
             ;
@@ -61,14 +126,64 @@ impl CreatureTrait for Skelly {
             scene_handler: skelly_scene_handle
         });
     }
+
+    fn update_animation(target: u32, index_animation: usize, event_writer: &mut EventWriter<ChangeAnimation>) {
+        info!("calling with {:#?} {}", SkellyAnimationId::from(index_animation), index_animation);
+        let mut new_animation = SkellyAnimationId::Idle;
+        let mut repeat = false;
+
+        match SkellyAnimationId::from(index_animation) {
+            SkellyAnimationId::Idle => {  }
+            SkellyAnimationId::LookingAround => {
+                new_animation = SkellyAnimationId::Idle;
+                repeat = true;
+            }
+            SkellyAnimationId::Attack => {
+            }
+            SkellyAnimationId::Yell => {
+            }
+            SkellyAnimationId::Walk => {}
+            SkellyAnimationId::Run => {}
+            SkellyAnimationId::Fall => {}
+            SkellyAnimationId::Hit => {
+            }
+            SkellyAnimationId::Die => {}
+            SkellyAnimationId::Spawn => {
+                new_animation = SkellyAnimationId::LookingAround;
+                repeat = false;
+
+            }
+            SkellyAnimationId::Hanged => {}
+            SkellyAnimationId::None => {}
+        }
+
+
+        event_writer.send(
+            ChangeAnimation {
+                target,
+                index: new_animation.into(),
+                repeat
+            }
+        );
+    }
 }
 
 fn setup_skelly(asset_server: &Res<AssetServer>, scene_path: &str) -> SceneHandle {
     let asset_scene_handle = asset_server.load(format!("{}{}", scene_path, "#Scene0").as_str());
 
+    let mut hm_animations = HashMapAnimationClip::new();
+
+    for i in 0..10 {
+        let id = SkellyAnimationId::from(i as usize);
+        let handle = asset_server.load(format!("{}#Animation{}", scene_path, id as usize).as_str());
+        hm_animations.insert(id.into(), id.get_duration(), handle);
+    }
+
     SceneHandle {
         handle: asset_scene_handle,
-        vec_animations: vec![
+        vec_animations: hm_animations,
+/*        vec_animations: ![
+            asset_server.load(format!("{}#Animation{}", scene_path, SkellyAnimationId::Spawn as usize).as_str()),
             asset_server.load(format!("{}#Animation{}", scene_path, SkellyAnimationId::Idle as usize).as_str()),
             asset_server.load(format!("{}#Animation{}", scene_path, SkellyAnimationId::LookingAround as usize).as_str()),
             asset_server.load(format!("{}#Animation{}", scene_path, SkellyAnimationId::Attack as usize).as_str()),
@@ -78,9 +193,8 @@ fn setup_skelly(asset_server: &Res<AssetServer>, scene_path: &str) -> SceneHandl
             asset_server.load(format!("{}#Animation{}", scene_path, SkellyAnimationId::Fall as usize).as_str()),
             asset_server.load(format!("{}#Animation{}", scene_path, SkellyAnimationId::Hit as usize).as_str()),
             asset_server.load(format!("{}#Animation{}", scene_path, SkellyAnimationId::Die as usize).as_str()),
-            asset_server.load(format!("{}#Animation{}", scene_path, SkellyAnimationId::Spawn as usize).as_str()),
             asset_server.load(format!("{}#Animation{}", scene_path, SkellyAnimationId::Hanged as usize).as_str()),
-        ],
+        ],*/
         creature_entity_id: None,
     }
 }

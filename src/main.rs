@@ -46,7 +46,7 @@ fn main() {
             ..Default::default()
         })
         .insert_resource(LogSettings {
-            filter: "info,wgpu_core=warn,wgpu_hal=warn,bastion_like=debug".into(),
+            filter: "info,wgpu_core=warn,wgpu_hal=error,bastion_like=debug".into(),
             level: bevy::log::Level::DEBUG,
         })
         .add_plugins(DefaultPlugins)

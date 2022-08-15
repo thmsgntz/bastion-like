@@ -628,8 +628,6 @@ fn keyboard_animation_control(
             if skelly.current_animation_id == SkellyAnimationId::Idle
                 || skelly.current_animation_id != animation_to_play
             {
-                //TODO lignes commentées arrête lanimation de walking?
-                //animations.play(&mut player, animation_to_play, true);
                 skelly.play_animation_move(&mut player, animation_to_play);
                 //skelly.current_animation_id = animation_to_play;
             }
@@ -639,7 +637,6 @@ fn keyboard_animation_control(
             if skelly.current_animation_id == SkellyAnimationId::Walk
                 || skelly.current_animation_id == SkellyAnimationId::Run
             {
-                //TODO lignes commentées arrête lanimation de walking?
                 skelly.play_animation_idle(&mut player);
                 //animations.play(&mut player, SkellyAnimationId::Idle, true);
                 //skelly.current_animation_id = SkellyAnimationId::Idle;
