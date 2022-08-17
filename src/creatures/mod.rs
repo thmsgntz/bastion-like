@@ -49,8 +49,8 @@ impl From<usize> for CurrentAnimationIndex {
 
 
 pub enum TypeCreature {
-    skelly,
-    gollum
+    Skelly,
+    Gollum
 }
 
 //#[derive(Bundle)]
@@ -66,11 +66,11 @@ impl Creature {
     pub fn update_animation(&self, target: u32, index_animation: usize, event_writer: &mut EventWriter<ChangeAnimation>)
     {
         match self.type_creature {
-            TypeCreature::skelly => {
+            TypeCreature::Skelly => {
                 info!("Calling update_animation skelly");
                 Skelly::update_animation(target, index_animation, event_writer);
             }
-            TypeCreature::gollum => {}
+            TypeCreature::Gollum => {}
         }
     }
 

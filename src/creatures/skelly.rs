@@ -113,7 +113,7 @@ impl CreatureTrait for Skelly {
                 parent.spawn_scene(skelly_scene_handle.handle.clone());
             })
             .insert(Creature {
-                type_creature: TypeCreature::skelly,
+                type_creature: TypeCreature::Skelly,
                 current_animation_index: SkellyAnimationId::Idle.into(),
             })
             .insert(Player)

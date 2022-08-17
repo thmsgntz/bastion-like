@@ -68,7 +68,7 @@ impl CreatureTrait for Gollum {
                 parent.spawn_scene(scene_handler.handle.clone());
             })
             .insert(Creature {
-                type_creature: TypeCreature::gollum,
+                type_creature: TypeCreature::Gollum,
                 current_animation_index: GollumAnimationId::Idle.into(),
             })
             .id()
