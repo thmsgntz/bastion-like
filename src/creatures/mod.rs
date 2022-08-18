@@ -2,6 +2,7 @@
 use bevy::prelude::*;
 use crate::animations_handler::{AddAnimation, ChangeAnimation};
 use crate::creatures::skelly::Skelly;
+use crate::creatures::mob::Gollum;
 
 pub(crate) mod skelly;
 mod chess_pieces;
@@ -12,6 +13,7 @@ TODO:
  0.5: Gérer l'enchainement des animations.
     -> hashmap (duration, animationClip) ok
     -> stopwatch ok
+    -> Gollum ok
  1. Déplacer les fonctions de skeleton.rs sur les déplacements de Skelly ici
  2. Essayer d'en faire des functions génériques?
  */
@@ -70,11 +72,16 @@ impl Creature {
                 info!("Calling update_animation skelly");
                 Skelly::update_animation(target, index_animation, event_writer);
             }
-            TypeCreature::Gollum => {}
+            TypeCreature::Gollum => {
+                info!("Calling update_animation Gollum");
+                Gollum::update_animation(target, index_animation, event_writer);}
         }
     }
 
 }
+
+
+
 //#[bundle]
 //pub transform: PbrBundle,
 // ajouter Transform

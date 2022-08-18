@@ -21,6 +21,7 @@ enum GollumAnimationId {
     Jump,
     Fly,
     Land,
+    None,
 }
 
 impl Into<usize> for GollumAnimationId {
@@ -40,9 +41,76 @@ impl Into<usize> for GollumAnimationId {
             GollumAnimationId::Jump => {11}
             GollumAnimationId::Fly => {12}
             GollumAnimationId::Land => {13}
+            GollumAnimationId::None => {14}
         }
     }
 }
+
+impl From<usize> for GollumAnimationId {
+    fn from(i: usize) -> Self {
+        match i {
+            0 => {  GollumAnimationId::Idle }
+            1 => {  GollumAnimationId::IdleAction }
+            2 => {  GollumAnimationId::SleepStart }
+            3 => {  GollumAnimationId::Sleep }
+            4 => {  GollumAnimationId::SleepEnd }
+            5 => {  GollumAnimationId::Damage }
+            6 => {  GollumAnimationId::Hit }
+            7 => {  GollumAnimationId::Die }
+            8 => {  GollumAnimationId::Walk }
+            9 => {  GollumAnimationId::Hit2 }
+            10 => { GollumAnimationId::Rage }
+            11 => { GollumAnimationId::Jump }
+            12 => { GollumAnimationId::Fly }
+            13 => { GollumAnimationId::Land }
+            _ => {GollumAnimationId::None}
+        }
+    }
+}
+
+impl GollumAnimationId {
+    fn get_duration (&self) -> f32 {
+        match self {
+            GollumAnimationId::Idle => {ANIMATION_DURATION_IDLE }
+            GollumAnimationId::IdleAction => {ANIMATION_DURATION_IDLE_ACTION}
+            GollumAnimationId::SleepStart => {ANIMATION_DURATION_SLEEP_START }
+            GollumAnimationId::Sleep => {ANIMATION_DURATION_SLEEP }
+            GollumAnimationId::SleepEnd => {ANIMATION_DURATION_SLEEP_END }
+            GollumAnimationId::Damage => {ANIMATION_DURATION_DAMAGE }
+            GollumAnimationId::Hit => {ANIMATION_DURATION_HIT }
+            GollumAnimationId::Die => {ANIMATION_DURATION_DIE }
+            GollumAnimationId::Walk => {ANIMATION_DURATION_WALK }
+            GollumAnimationId::Hit2 => {ANIMATION_DURATION_HIT2 }
+            GollumAnimationId::Rage => {ANIMATION_DURATION_RAGE }
+            GollumAnimationId::Jump => {ANIMATION_DURATION_JUMP}
+            GollumAnimationId::Fly => {ANIMATION_DURATION_FLY}
+            GollumAnimationId::Land => {ANIMATION_DURATION_LAND}
+            GollumAnimationId::None => {ANIMATION_DURATION_IDLE}
+        }
+    }
+}
+
+/*
+ TODO:
+    Les animations ont une durée chelou, croissante.
+    On dirait que IDLE_ACTION a 2 sec inutile, avant de jouer son animation de 2.1 secondes.
+    Comme si elle devait commencer après les 2sec de la n-1.
+    Chiant.
+ */
+const ANIMATION_DURATION_IDLE : f32 = 2.00;
+const ANIMATION_DURATION_IDLE_ACTION: f32 = 4.1;
+const ANIMATION_DURATION_SLEEP_START : f32 = 4.3333335;
+const ANIMATION_DURATION_SLEEP : f32 = 6.3333335;
+const ANIMATION_DURATION_SLEEP_END : f32 = 7.6666665;
+const ANIMATION_DURATION_DAMAGE : f32 = 9.0;
+const ANIMATION_DURATION_HIT : f32 = 9.933333;
+const ANIMATION_DURATION_DIE : f32 = 11.066667;
+const ANIMATION_DURATION_WALK : f32 = 12.133333;
+const ANIMATION_DURATION_HIT2 : f32 = 12.933333;
+const ANIMATION_DURATION_RAGE : f32 = 14.533334;
+const ANIMATION_DURATION_JUMP : f32 = 15.5;
+const ANIMATION_DURATION_FLY : f32 = 16.166666;
+const ANIMATION_DURATION_LAND : f32 = 16.666666;
 
 impl Into<CurrentAnimationIndex> for GollumAnimationId {
     fn into(self) -> CurrentAnimationIndex {
@@ -83,38 +151,59 @@ impl CreatureTrait for Gollum {
         );
     }
 
-    fn update_animation(_target: u32, _index_animation: usize, _event_writer: &mut EventWriter<ChangeAnimation>) {
-        todo!()
+    fn update_animation(target: u32, index_animation: usize, event_writer: &mut EventWriter<ChangeAnimation>) {
+        info!("calling with {:#?} {}", GollumAnimationId::from(index_animation), index_animation);
+        let mut new_animation = GollumAnimationId::Idle;
+        let mut repeat = false;
+
+        match GollumAnimationId::from(index_animation) {
+            GollumAnimationId::Idle => {
+                new_animation = GollumAnimationId::IdleAction;
+            }
+            GollumAnimationId::IdleAction => {
+                new_animation = GollumAnimationId::Idle;
+            }
+            GollumAnimationId::SleepStart => {}
+            GollumAnimationId::Sleep => {}
+            GollumAnimationId::SleepEnd => {}
+            GollumAnimationId::Damage => {}
+            GollumAnimationId::Hit => {}
+            GollumAnimationId::Die => {}
+            GollumAnimationId::Walk => {}
+            GollumAnimationId::Hit2 => {}
+            GollumAnimationId::Rage => {}
+            GollumAnimationId::Jump => {}
+            GollumAnimationId::Fly => {}
+            GollumAnimationId::Land => {}
+            GollumAnimationId::None => {}
+        }
+
+
+        event_writer.send(
+            ChangeAnimation {
+                target,
+                index: new_animation.into(),
+                repeat
+            }
+        );
     }
 }
 
 fn setup_gollum(asset_server: &Res<AssetServer>, scene_path: &str) -> SceneHandle {
+
     let asset_scene_handle = asset_server.load(format!("{}{}", scene_path, "#Scene0").as_str());
 
-    let hm_animations = HashMapAnimationClip::new();
+    let mut hm_animations = HashMapAnimationClip::new();
 
-    // let id = SkellyAnimationId::Idle;
-    // hm_animations.insert(id.into(), id.get_duration(),  asset_server.load(format!("{}#Animation{}", scene_path, id as usize).as_str()));
+    for i in 0..GollumAnimationId::None.into() {
+        let id = GollumAnimationId::from(i as usize);
+        let handle = asset_server.load(format!("{}#Animation{}", scene_path, id as usize).as_str());
+        hm_animations.insert(id.into(), id.get_duration(), handle);
+    }
 
     SceneHandle {
         handle: asset_scene_handle,
         vec_animations: hm_animations,
-/*        vec_animations: vec![
-            asset_server.load(format!("{}#Animation{}", scene_path, GollumAnimationId::Idle as usize).as_str()),
-            asset_server.load(format!("{}#Animation{}", scene_path, GollumAnimationId::IdleAction as usize).as_str()),
-            asset_server.load(format!("{}#Animation{}", scene_path, GollumAnimationId::SleepStart as usize).as_str()),
-            asset_server.load(format!("{}#Animation{}", scene_path, GollumAnimationId::Sleep as usize).as_str()),
-            asset_server.load(format!("{}#Animation{}", scene_path, GollumAnimationId::SleepEnd as usize).as_str()),
-            asset_server.load(format!("{}#Animation{}", scene_path, GollumAnimationId::Damage as usize).as_str()),
-            asset_server.load(format!("{}#Animation{}", scene_path, GollumAnimationId::Hit as usize).as_str()),
-            asset_server.load(format!("{}#Animation{}", scene_path, GollumAnimationId::Die as usize).as_str()),
-            asset_server.load(format!("{}#Animation{}", scene_path, GollumAnimationId::Walk as usize).as_str()),
-            asset_server.load(format!("{}#Animation{}", scene_path, GollumAnimationId::Hit2 as usize).as_str()),
-            asset_server.load(format!("{}#Animation{}", scene_path, GollumAnimationId::Rage as usize).as_str()),
-            asset_server.load(format!("{}#Animation{}", scene_path, GollumAnimationId::Jump as usize).as_str()),
-            asset_server.load(format!("{}#Animation{}", scene_path, GollumAnimationId::Fly as usize).as_str()),
-            asset_server.load(format!("{}#Animation{}", scene_path, GollumAnimationId::Land as usize).as_str()),
-        ],*/
         creature_entity_id: None,
     }
 }

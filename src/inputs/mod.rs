@@ -30,7 +30,7 @@ fn spawn_creature(
         return
     }
 
-    //if keyboard_input.just_pressed(KeyCode::Numpad2) || keyboard_input.just_pressed(KeyCode::Key2) {
-    //    creatures::mob::Gollum::spawn(command, asset_server, event_writer);
-    //}
+    if keyboard_input.just_pressed(KeyCode::Numpad2) || keyboard_input.just_pressed(KeyCode::Key2) {
+       creatures::mob::Gollum::spawn(command, asset_server, event_writer);
+    }
 }

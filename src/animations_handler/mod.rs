@@ -2,6 +2,7 @@ use crate::creatures::{Creature};
 use bevy::prelude::*;
 use bevy::utils::HashMap;
 use std::borrow::{BorrowMut};
+use std::fmt::Pointer;
 use std::time::Duration;
 
 
@@ -17,7 +18,9 @@ impl Plugin for AnimationHandler {
             .add_system_to_stage(CoreStage::PostUpdate, add_animation)
             .add_system_to_stage(CoreStage::PostUpdate, remove_animation)
             .add_system_to_stage(CoreStage::PostUpdate, update_animation.after(add_animation))
-            .add_system_to_stage(CoreStage::PostUpdate, checker_animation_duration.after(update_animation));
+            .add_system_to_stage(CoreStage::PostUpdate, checker_animation_duration.after(update_animation))
+            //.add_system(inspect_animation_clip)
+        ;
     }
 }
 
@@ -69,9 +72,7 @@ impl HashMapAnimationClip {
         self.0.get(&ind)
     }
 
-    pub fn new() -> Self {
-        HashMapAnimationClip(HashMap::new())
-    }
+    pub fn new() -> Self {HashMapAnimationClip(HashMap::new())}
 
     pub fn insert(
         &mut self,
@@ -220,15 +221,18 @@ fn update_animation(
 
                             let (duration, animation) =
                                 &scene_handler.vec_animations.get_pair(event.index).unwrap();
+
                             if event.repeat {
                                 player.play(animation.clone_weak()).repeat();
                             } else {
                                 player.play(animation.clone_weak());
+                                debug!("Playing!");
 
                                 for mut stopwatch in query_stopwatch.iter_mut() {
                                     if stopwatch.creature_entity_id == Some(entity.id()) {
                                         stopwatch.index_animation = event.index;
                                         stopwatch.time.set_duration(Duration::from_secs_f32(*duration));
+                                        debug!("Setting stopwatch!");
                                     }
                                 }
                             }
@@ -241,6 +245,35 @@ fn update_animation(
             }
         }
     }
+}
+
+
+/// Utiliser pour trouver la durée d'une AnimationClip
+/// Ne fonctionne que pour le premier élément ajouté dans VecSceneHandle, après 'done' > 2.
+fn inspect_animation_clip(
+    assets_handle: Res<Assets<AnimationClip>>,
+    scene_handlers: Res<VecSceneHandle>,
+    mut done: Local<usize>,
+) {
+    if *done > 2 {
+        return
+    }
+
+    for scene_handler in &scene_handlers.0 {
+        for ind in 0..scene_handler.vec_animations.0.len() {
+            let (_, handle) = scene_handler.vec_animations.get_pair(ind).unwrap();
+            if let Some(anim) = assets_handle.get(handle)
+            {
+                let st = format!("Start : {:?}", anim);
+                let duration_str_i = (st.as_str()).find("duration").unwrap();
+                let len = st.len();
+
+                info!("Anim index {}, {}", ind, st.get(duration_str_i..len-2).unwrap());
+                *done += 1;
+            }
+        }
+    }
+
 }
 
 
